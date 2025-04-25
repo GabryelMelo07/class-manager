@@ -1,5 +1,8 @@
 package com.class_manager.backend.model;
 
+import com.class_manager.backend.dto.model.discipline.DisciplineDto;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,10 +33,12 @@ public class Discipline {
 
 	@ManyToOne(cascade = CascadeType.PERSIST)
 	@JoinColumn(name = "teacher_id")
+	@JsonIgnoreProperties("disciplines")
 	private Teacher teacher;
 	
-	@ManyToOne(cascade = CascadeType.PERSIST)
-	@JoinColumn(name = "class_room_id")
-	private ClassRoom classRoom;
+	public Discipline(DisciplineDto createDisciplineDto) {
+		this.name = createDisciplineDto.name();
+		this.abbreviation = createDisciplineDto.abbreviation();
+	}
 	
 }

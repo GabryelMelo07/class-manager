@@ -1,8 +1,8 @@
 package com.class_manager.backend.dto.config_properties;
 
-public record EmailConfigProperties(
+public record EmailConfig(
 	String host,
-	String port,
+	Integer port,
 	String username,
 	String password,
 	Boolean smtpAuth,

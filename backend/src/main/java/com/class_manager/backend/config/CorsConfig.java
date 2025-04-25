@@ -5,15 +5,15 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.class_manager.backend.dto.AppConfigProperties;
-import com.class_manager.backend.dto.config_properties.CorsProperties;
+import com.class_manager.backend.dto.config_properties.Cors;
 
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
-	private final CorsProperties corsProperties;
+	private final Cors corsProperties;
 
 	public CorsConfig(AppConfigProperties appConfigProperties) {
-		this.corsProperties = appConfigProperties.corsProperties();
+		this.corsProperties = appConfigProperties.cors();
 	}
 
 	@Override

@@ -1,4 +1,7 @@
 {
+  "institution": {
+    "name": "Your Institution Name"
+  },
   "api": {
     "url": "https://your_api_url.com",
     "title": "Your API Title",
@@ -6,7 +9,25 @@
     "description": "Your API Description",
     "termsOfService": "Your Terms of Service"
   },
-  "emailConfigProperties": {
+  "frontend": {
+    "url": "https://your_frontend_url.com"
+  },
+  "cors": {
+    "allowedOrigins": [
+      "http://localhost:3000",
+      "https://your-production-url.com"
+    ],
+    "allowedMethods": [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE"
+    ],
+    "allowedHeaders": ["*"]
+  },
+  "swaggerTryItOutDisabled": true,
+  "emailConfig": {
     "host": "smtp.gmail.com",
     "port": "587",
     "username": "your_username@gmail.com",
@@ -22,23 +43,5 @@
     "headerFont": "#191919",
     "buttonFont": "#191919",
     "footerFont": "#f1f1f1"
-  },
-  "institutionProperties": {
-    "name": "Your Institution Name"
-  },
-  "corsProperties": {
-    "allowedOrigins": [
-      "http://localhost:3000",
-      "https://your-production-url.com"
-    ],
-    "allowedMethods": [
-      "GET",
-      "POST",
-      "PUT",
-      "PATCH",
-      "DELETE"
-    ],
-    "allowedHeaders": ["*"]
-  },
-  "swaggerTryItOutDisabled": true
+  }
 }

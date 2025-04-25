@@ -2,6 +2,7 @@ package com.class_manager.backend.config.security;
 
 import com.class_manager.backend.config.security.validators.ScopeValidator;
 import com.class_manager.backend.config.security.validators.SubjectValidator;
+import com.class_manager.backend.dto.AppConfigProperties;
 import com.class_manager.backend.config.security.validators.IssuedAtValidator;
 import com.class_manager.backend.config.security.validators.ExpiresAtValidator;
 
@@ -13,7 +14,6 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -41,20 +41,21 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-	@Value("${jwt.public.key}")
-	private RSAPublicKey publicKey;
-
-	@Value("${jwt.private.key}")
-	private RSAPrivateKey privateKey;
-
-	@Value("${api.url}")
-	private String issuer;
-
+	private final String issuer;
+	private final RSAPublicKey publicKey;
+	private final RSAPrivateKey privateKey;
+	private final ScopeValidator scopeValidator;
 	private final SubjectValidator subjectValidator;
 
-	private final ScopeValidator scopeValidator;
-
-	public SecurityConfig(SubjectValidator subjectValidator, ScopeValidator scopeValidator) {
+	public SecurityConfig(
+			@Value("${jwt.public.key}") RSAPublicKey publicKey,
+			@Value("${jwt.private.key}") RSAPrivateKey privateKey,
+			SubjectValidator subjectValidator,
+			ScopeValidator scopeValidator,
+			AppConfigProperties appConfigProperties) {
+		this.issuer = appConfigProperties.api().url();
+		this.publicKey = publicKey;
+		this.privateKey = privateKey;
 		this.subjectValidator = subjectValidator;
 		this.scopeValidator = scopeValidator;
 	}
@@ -63,10 +64,10 @@ public class SecurityConfig {
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
 		http.authorizeHttpRequests(authorize -> authorize
-				.requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-				.requestMatchers(HttpMethod.POST, "/auth/reset-password").permitAll()
-				.requestMatchers(HttpMethod.POST, "/auth/reset-password/request").permitAll()
-				.requestMatchers(HttpMethod.POST, "/auth/refresh-token").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password/request").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh-token").permitAll()
 				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 				.anyRequest().authenticated())
 				.csrf(csrf -> csrf.disable())
@@ -78,12 +79,11 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	@Primary
 	JwtDecoder jwtDecoder() {
 		NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(publicKey).build();
-		
+
 		List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();
-		
+
 		// Default Validators
 		validators.add(JwtValidators.createDefault());
 		validators.add(JwtValidators.createDefaultWithIssuer(issuer));

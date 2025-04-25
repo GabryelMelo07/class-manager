@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import com.class_manager.backend.dto.AppConfigProperties;
-import com.class_manager.backend.dto.config_properties.ApiProperties;
+import com.class_manager.backend.dto.config_properties.Api;
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
@@ -31,12 +31,12 @@ import io.swagger.v3.oas.models.servers.Server;
 @SecurityScheme(name = "bearerAuth", type = SecuritySchemeType.HTTP, bearerFormat = "JWT", scheme = "bearer")
 public class SwaggerConfig {
 
-	private final ApiProperties apiProperties;
+	private final Api apiProperties;
 	private final Boolean swaggerTryItOutDisabled;
 
 	public SwaggerConfig(AppConfigProperties appConfigProperties) {
 		this.swaggerTryItOutDisabled = appConfigProperties.swaggerTryItOutDisabled();
-		this.apiProperties = appConfigProperties.apiProperties();
+		this.apiProperties = appConfigProperties.api();
 	}
 
 	@Bean

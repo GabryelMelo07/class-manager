@@ -11,6 +11,7 @@ import org.springframework.core.env.Environment;
 import com.class_manager.backend.dto.AppConfigProperties;
 
 public class AppConfigLoaderTest {
+
 	@Test
     void shouldLoadDevConfigFileWhenProfileIsDev() throws Exception {
         Environment mockEnv = mock(Environment.class);
@@ -25,11 +26,12 @@ public class AppConfigLoaderTest {
     @Test
     void shouldLoadProdConfigFileWhenProfileIsNotDev() throws Exception {
         Environment mockEnv = mock(Environment.class);
-        when(mockEnv.getProperty("spring.profiles.active")).thenReturn("prod");
+        when(mockEnv.getProperty("spring.profiles.active", "dev")).thenReturn("prd");
 
         AppConfigLoader loader = new AppConfigLoader(mockEnv);
         AppConfigProperties properties = loader.injectAppConfigProperties();
 
         assertNotNull(properties);
     }
+
 }

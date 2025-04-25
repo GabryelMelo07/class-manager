@@ -1,6 +1,6 @@
 package com.class_manager.backend.dto.config_properties;
 
-public record ApiProperties(
+public record Api(
 	String url,
 	String title,
 	String version,
