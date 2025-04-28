@@ -31,8 +31,9 @@ public class ClassRoomService {
 		return classRoomRepository.findById(id);
 	}
 
-	public ClassRoom save(ClassRoom classRoom) {
-		return classRoomRepository.save(classRoom);
+	public ClassRoom save(ClassRoomDto dto) {
+		ClassRoom newClassRoom = new ClassRoom(dto);
+		return classRoomRepository.save(newClassRoom);
 	}
 
 	public ClassRoom patch(Long classRoomId, ClassRoomDto classRoomDto) {

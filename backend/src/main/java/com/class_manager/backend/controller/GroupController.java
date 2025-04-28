@@ -1,7 +1,10 @@
 package com.class_manager.backend.controller;
 
+import com.class_manager.backend.dto.model.group.GroupDto;
 import com.class_manager.backend.model.Group;
 import com.class_manager.backend.service.GroupService;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,8 +33,13 @@ public class GroupController {
     }
 
     @PostMapping
-    public ResponseEntity<Group> save(@RequestBody Group group) {
-        return ResponseEntity.status(201).body(groupService.save(group));
+    public ResponseEntity<Group> save(@RequestBody GroupDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(groupService.save(dto));
+    }
+
+	@PatchMapping("/{id}")
+	public ResponseEntity<Group> patch(@PathVariable Long id, @RequestBody GroupDto groupDto) {
+		return ResponseEntity.ok(groupService.patch(id, groupDto));
     }
 
     @DeleteMapping("/{id}")

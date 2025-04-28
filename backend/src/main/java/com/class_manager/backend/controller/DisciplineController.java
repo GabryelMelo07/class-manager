@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,7 +38,7 @@ public class DisciplineController {
 
 	@PostMapping
 	public ResponseEntity<Discipline> save(@RequestBody DisciplineDto dto) {
-		return ResponseEntity.status(201).body(disciplineService.save(dto));
+		return ResponseEntity.status(HttpStatus.CREATED).body(disciplineService.save(dto));
 	}
 
 	@Operation(summary = "Partially update a discipline", description = "Updates only the provided fields of a discipline. Requires teacherId to be a valid Teacher.")

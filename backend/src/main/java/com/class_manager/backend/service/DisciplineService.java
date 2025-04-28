@@ -38,9 +38,10 @@ public class DisciplineService {
 	}
 
 	public Discipline save(DisciplineDto dto) {
+		Teacher teacher = (Teacher) userRepository.findById(dto.teacherId())
+				.orElseThrow(() -> new EntityNotFoundException(
+						"Teacher not found with id: " + dto.teacherId()));
 		Discipline newDiscipline = new Discipline(dto);
-		Teacher teacher = (Teacher) userRepository.findById(dto.teacherId()).orElseThrow(() -> new EntityNotFoundException(
-				"Teacher not found with id: " + dto.teacherId()));
 
 		newDiscipline.setTeacher(teacher);
 

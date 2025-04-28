@@ -24,6 +24,7 @@ import com.class_manager.backend.dto.auth.RefreshTokenRequestDto;
 import com.class_manager.backend.dto.auth.RegisterUserDto;
 import com.class_manager.backend.dto.auth.ResetPasswordDto;
 import com.class_manager.backend.dto.auth.UserResponseDto;
+import com.class_manager.backend.dto.model.teacher.TeacherResponseDto;
 import com.class_manager.backend.enums.RoleName;
 import com.class_manager.backend.exceptions.JwtTokenValidationException;
 import com.class_manager.backend.exceptions.ResetPasswordTokenInvalidException;
@@ -32,6 +33,7 @@ import com.class_manager.backend.model.Teacher;
 import com.class_manager.backend.model.User;
 import com.class_manager.backend.repository.PasswordResetTokenRepository;
 import com.class_manager.backend.repository.RoleRepository;
+import com.class_manager.backend.repository.TeacherRepository;
 import com.class_manager.backend.repository.UserRepository;
 import com.class_manager.backend.utils.EmailTemplate;
 import com.class_manager.backend.utils.JwtUtils;
@@ -49,6 +51,7 @@ public class UserService {
 	private final BCryptPasswordEncoder passwordEncoder;
 
 	private final UserRepository userRepository;
+	private final TeacherRepository teacherRepository;
 	private final RoleRepository roleRepository;
 	private final PasswordResetTokenRepository passwordResetTokenRepository;
 	private final EmailService emailService;
@@ -62,6 +65,7 @@ public class UserService {
 			JwtDecoder jwtDecoder,
 			BCryptPasswordEncoder passwordEncoder,
 			UserRepository userRepository,
+			TeacherRepository teacherRepository,
 			RoleRepository roleRepository,
 			PasswordResetTokenRepository passwordResetTokenRepository,
 			EmailService emailService,
@@ -69,6 +73,7 @@ public class UserService {
 		this.jwtUtils = jwtUtils;
 		this.jwtDecoder = jwtDecoder;
 		this.userRepository = userRepository;
+		this.teacherRepository = teacherRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.roleRepository = roleRepository;
 		this.passwordResetTokenRepository = passwordResetTokenRepository;
@@ -127,6 +132,17 @@ public class UserService {
 		}
 
 		return users;
+	}
+
+	public List<TeacherResponseDto> findAllTeachers() {
+		List<TeacherResponseDto> teachers = new ArrayList<>();
+
+		for (User user : teacherRepository.findAllTeachers()) {
+			teachers.add(new TeacherResponseDto(user.getId(), user.getEmail(), user.getName(),
+					user.getSurname(), user.getRole().getName()));
+		}
+
+		return teachers;
 	}
 
 	public LoginResponseDto login(LoginRequestDto loginRequest) {

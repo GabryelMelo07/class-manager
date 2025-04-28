@@ -3,13 +3,15 @@ package com.class_manager.backend.controller;
 import com.class_manager.backend.dto.model.class_room.ClassRoomDto;
 import com.class_manager.backend.model.ClassRoom;
 import com.class_manager.backend.service.ClassRoomService;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/classrooms")
+@RequestMapping("/api/v1/class-rooms")
 public class ClassRoomController {
 
     private final ClassRoomService classRoomService;
@@ -31,8 +33,8 @@ public class ClassRoomController {
     }
 
     @PostMapping
-    public ResponseEntity<ClassRoom> save(@RequestBody ClassRoom classRoom) {
-        return ResponseEntity.status(201).body(classRoomService.save(classRoom));
+    public ResponseEntity<ClassRoom> save(@RequestBody ClassRoomDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(classRoomService.save(dto));
     }
 
 	@PatchMapping("/{id}")

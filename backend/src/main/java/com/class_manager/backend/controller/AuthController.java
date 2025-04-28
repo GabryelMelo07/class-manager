@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.class_manager.backend.dto.auth.CreateTeacherDto;
 import com.class_manager.backend.dto.auth.CreateUserDto;
 import com.class_manager.backend.dto.auth.LoginRequestDto;
 import com.class_manager.backend.dto.auth.LoginResponseDto;
@@ -53,19 +52,6 @@ public class AuthController {
 	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
 	public ResponseEntity<Void> registerUser(@RequestBody CreateUserDto dto) {
 		userService.registerUser(dto);
-		return ResponseEntity.status(HttpStatus.CREATED).build();
-	}
-
-	@Operation(summary = "Cadastrar novo professor", description = "Este recurso só pode ser usado por usuários administradores e realiza o cadastro de um novo professor")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", content = @Content(mediaType = "application/json")),
-			@ApiResponse(responseCode = "422", description = "Já existe um professor com este e-mail no banco de dados", content = @Content(mediaType = "application/json")),
-	})
-	@Transactional
-	@PostMapping("/register-teacher")
-	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-	public ResponseEntity<Void> registerTeacher(@RequestBody CreateTeacherDto dto) {
-		userService.registerTeacher(dto);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
