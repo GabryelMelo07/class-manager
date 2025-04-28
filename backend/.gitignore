@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# RSA Keys
+*.key
+*.pub
+
+# Dev App Settings
+app_settings_dev.json
