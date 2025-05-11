@@ -1,8 +1,9 @@
 package com.class_manager.backend.service;
 
-import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.class_manager.backend.dto.model.schedule.ScheduleDto;
@@ -27,8 +28,8 @@ public class ScheduleService {
 		this.groupRepository = groupRepository;
 	}
 
-	public List<Schedule> findAll() {
-		return scheduleRepository.findAll();
+	public Page<Schedule> findAll(Pageable pageable) {
+		return scheduleRepository.findAll(pageable);
 	}
 
 	public Optional<Schedule> findById(Long id) {

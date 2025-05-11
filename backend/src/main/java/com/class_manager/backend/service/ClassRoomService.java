@@ -8,9 +8,10 @@ import com.class_manager.backend.utils.Patcher;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -23,8 +24,8 @@ public class ClassRoomService {
 		this.classRoomRepository = classRoomRepository;
 	}
 
-	public List<ClassRoom> findAll() {
-		return classRoomRepository.findAll();
+	public Page<ClassRoom> findAll(Pageable pageable) {
+		return classRoomRepository.findAll(pageable);
 	}
 
 	public Optional<ClassRoom> findById(Long id) {

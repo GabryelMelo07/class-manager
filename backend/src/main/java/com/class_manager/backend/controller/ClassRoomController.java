@@ -4,11 +4,11 @@ import com.class_manager.backend.dto.model.class_room.ClassRoomDto;
 import com.class_manager.backend.model.ClassRoom;
 import com.class_manager.backend.service.ClassRoomService;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/class-rooms")
@@ -21,8 +21,8 @@ public class ClassRoomController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ClassRoom>> findAll() {
-        return ResponseEntity.ok().body(classRoomService.findAll());
+    public ResponseEntity<Page<ClassRoom>> findAll(Pageable pageable) {
+        return ResponseEntity.ok().body(classRoomService.findAll(pageable));
     }
 
     @GetMapping("/{id}")

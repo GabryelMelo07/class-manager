@@ -39,8 +39,8 @@ public class Schedule {
 
     public Schedule(ScheduleDto dto) {
         this.dayOfWeek = dto.dayOfWeek();
-        this.startTime = LocalTime.of(dto.startTime(), 0, 0);
-        this.endTime = LocalTime.of(dto.endTime(), 0, 0);
+        this.startTime = dto.startTime();
+        this.endTime = dto.endTime();
     }
 
 }

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,8 +52,7 @@ class DataInitializerTest {
 		when(roleRepository.findAll()).thenReturn(List.of(
 			new Role(RoleName.ADMIN),
 			new Role(RoleName.COORDINATOR),
-			new Role(RoleName.TEACHER),
-			new Role(RoleName.VISITOR)
+			new Role(RoleName.TEACHER)
 		));
 
 		dataInitializer.createUserRoles();
@@ -78,7 +78,7 @@ class DataInitializerTest {
 		when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.empty());
 
 		Role adminRole = new Role(RoleName.ADMIN);
-		when(roleRepository.findByName(RoleName.ADMIN)).thenReturn((adminRole));
+		when(roleRepository.findByName(RoleName.ADMIN)).thenReturn(Optional.of(adminRole));
 
 		when(passwordEncoder.encode("admin123")).thenReturn("encodedPassword");
 
@@ -93,7 +93,7 @@ class DataInitializerTest {
 		assertEquals("encodedPassword", savedUser.getPassword());
 		assertEquals("Admin", savedUser.getName());
 		assertEquals("User", savedUser.getSurname());
-		assertEquals(adminRole, savedUser.getRole());
+		assertEquals(Set.of(adminRole), savedUser.getRoles());
 	}
 
 	@Test
@@ -101,7 +101,7 @@ class DataInitializerTest {
 		InitialAdminUser initialAdminUser = new InitialAdminUser("admin@example.com", "admin123", "Admin", "User");
 		when(appConfigProperties.initialAdminUser()).thenReturn(initialAdminUser);
 		when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.empty());
-		when(roleRepository.findByName(RoleName.ADMIN)).thenReturn(new Role(RoleName.ADMIN));
+		when(roleRepository.findByName(RoleName.ADMIN)).thenReturn(Optional.of(new Role(RoleName.ADMIN)));
 
 		when(passwordEncoder.encode("admin123")).thenReturn("encodedPassword");
 		doThrow(new RuntimeException("Database error")).when(userRepository).save(any(User.class));

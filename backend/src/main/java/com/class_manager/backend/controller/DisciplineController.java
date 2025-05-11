@@ -8,11 +8,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/disciplines")
@@ -25,8 +25,8 @@ public class DisciplineController {
 	}
 
 	@GetMapping
-	public ResponseEntity<List<Discipline>> findAll() {
-		return ResponseEntity.ok(disciplineService.findAll());
+	public ResponseEntity<Page<Discipline>> findAll(Pageable pageable) {
+		return ResponseEntity.ok(disciplineService.findAll(pageable));
 	}
 
 	@GetMapping("/{id}")
@@ -41,7 +41,7 @@ public class DisciplineController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(disciplineService.save(dto));
 	}
 
-	@Operation(summary = "Partially update a discipline", description = "Updates only the provided fields of a discipline. Requires teacherId to be a valid Teacher.")
+	@Operation(summary = "Partially update a discipline", description = "Updates only the provided fields of a discipline. Requires teacherId to be a valid User with the Teacher Role.")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Discipline successfully updated"),
 			@ApiResponse(responseCode = "404", description = "Discipline or teacher not found"),

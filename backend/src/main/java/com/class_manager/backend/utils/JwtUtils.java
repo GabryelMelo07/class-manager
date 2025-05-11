@@ -1,7 +1,7 @@
 package com.class_manager.backend.utils;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.util.stream.Collectors;
 
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -19,10 +19,9 @@ public class JwtUtils {
 		this.jwtEncoder = jwtEncoder;
 	}
 
-	private JwtClaimsSet buildJwtTokenClaims(String issuer, String subject, String name, String surname,
+	private JwtClaimsSet buildJwtTokenClaims(String issuer, String subject, Instant expiresAt, String name, String surname,
 			String scope) {
 		Instant now = Instant.now();
-		Instant expiresAt = now.plus(1, ChronoUnit.HOURS);
 
 		return JwtClaimsSet.builder()
 				.issuer(issuer)
@@ -34,9 +33,13 @@ public class JwtUtils {
 				.build();
 	}
 
-	public String buildJwtAccessToken(String issuer, String subject, User user) {
-		String scope = user.getRole().getName().name();
-		var tokenClaims = buildJwtTokenClaims(issuer, subject, user.getName(), user.getSurname(), scope);
+	public String buildJwtAccessToken(String issuer, String subject, Instant expiresAt, User user) {
+		String scope = user.getRoles()
+				.stream()
+				.map(role -> role.getName().getRoleName())
+				.collect(Collectors.joining(" "));
+
+		var tokenClaims = buildJwtTokenClaims(issuer, subject, expiresAt, user.getName(), user.getSurname(), scope);
 		return jwtEncoder.encode(JwtEncoderParameters.from(tokenClaims)).getTokenValue();
 	}
 

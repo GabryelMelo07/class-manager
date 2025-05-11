@@ -11,9 +11,10 @@ import com.class_manager.backend.utils.Patcher;
 
 import jakarta.persistence.EntityNotFoundException;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -30,8 +31,8 @@ public class GroupService {
 		this.disciplineRepository = disciplineRepository;
 	}
 
-	public List<Group> findAll() {
-		return groupRepository.findAll();
+	public Page<Group> findAll(Pageable pageable) {
+		return groupRepository.findAll(pageable);
 	}
 
 	public Optional<Group> findById(Long id) {
