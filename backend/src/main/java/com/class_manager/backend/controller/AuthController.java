@@ -50,8 +50,8 @@ public class AuthController {
 	@Transactional
 	@PostMapping("/register")
 	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-	public ResponseEntity<Void> registerUser(@RequestBody CreateUserDto dto) {
-		userService.registerUser(dto);
+	public ResponseEntity<Void> register(@RequestBody CreateUserDto dto) {
+		userService.register(dto);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 

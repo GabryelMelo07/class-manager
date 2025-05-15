@@ -1,8 +1,9 @@
 package com.class_manager.backend.service;
 
-import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.class_manager.backend.dto.model.schedule.ScheduleDto;
@@ -21,14 +22,16 @@ public class ScheduleService {
 
 	private final ScheduleRepository scheduleRepository;
 	private final GroupRepository groupRepository;
+	private final SemesterService semesterService;
 
-	public ScheduleService(ScheduleRepository scheduleRepository, GroupRepository groupRepository) {
+	public ScheduleService(ScheduleRepository scheduleRepository, GroupRepository groupRepository, SemesterService semesterService) {
 		this.scheduleRepository = scheduleRepository;
 		this.groupRepository = groupRepository;
+		this.semesterService = semesterService;
 	}
 
-	public List<Schedule> findAll() {
-		return scheduleRepository.findAll();
+	public Page<Schedule> findAll(Pageable pageable) {
+		return scheduleRepository.findAll(pageable);
 	}
 
 	public Optional<Schedule> findById(Long id) {
@@ -42,7 +45,8 @@ public class ScheduleService {
 		Schedule newSchedule = new Schedule(dto);
 
 		newSchedule.setGroup(group);
-		
+		newSchedule.setSemester(semesterService.getCurrentSemester());
+
 		return scheduleRepository.save(newSchedule);
 	}
 

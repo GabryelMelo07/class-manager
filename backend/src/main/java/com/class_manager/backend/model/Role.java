@@ -28,8 +28,8 @@ public class Role {
     @Column(nullable = false, unique = true)
     private RoleName name;
     
-	public Role(RoleName name) {
-        this.name = name;
+	public Role(RoleName roleEnum) {
+        this.name = roleEnum;
     }
 	
 }

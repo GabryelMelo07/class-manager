@@ -98,19 +98,16 @@ public class DataInitializer implements ApplicationRunner {
 				return;
 			}
 
-			Role role = roleRepository.findByName(RoleName.ADMIN);
-
-			if (role == null) {
-				throw new IllegalStateException("Perfil de acesso " + RoleName.ADMIN
-						+ ", não encontrado no banco de dados. Não foi possível criar o usuário inicial.");
-			}
+			Role role = roleRepository.findByName(RoleName.ADMIN)
+				.orElseThrow(() -> new IllegalStateException("Access profile " + RoleName.ADMIN
+						+ " not found in the database. Unable to create the initial user."));
 
 			User user = new User();
 			user.setEmail(initialAdminUser.email());
 			user.setPassword(passwordEncoder.encode(initialAdminUser.password()));
 			user.setName(initialAdminUser.name());
 			user.setSurname(initialAdminUser.surname());
-			user.setRole(role);
+			user.setRoles(Set.of(role));
 
 			userRepository.save(user);
 

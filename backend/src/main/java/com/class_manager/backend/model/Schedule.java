@@ -8,6 +8,7 @@ import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 import com.class_manager.backend.dto.model.schedule.ScheduleDto;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "schedule", 
@@ -35,12 +36,17 @@ public class Schedule {
 
 	@ManyToOne(optional = false, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "group_id")
+	@JsonIgnoreProperties({"semester"})
     private Group group;
+
+	@ManyToOne(optional = false)
+    @JoinColumn(name = "semester_id")
+    private Semester semester;
 
     public Schedule(ScheduleDto dto) {
         this.dayOfWeek = dto.dayOfWeek();
-        this.startTime = LocalTime.of(dto.startTime(), 0, 0);
-        this.endTime = LocalTime.of(dto.endTime(), 0, 0);
+        this.startTime = dto.startTime();
+        this.endTime = dto.endTime();
     }
 
 }

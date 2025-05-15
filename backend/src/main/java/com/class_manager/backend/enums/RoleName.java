@@ -10,8 +10,7 @@ public enum RoleName {
 	
 	ADMIN("admin"),
 	COORDINATOR("coordinator"),
-	TEACHER("teacher"),
-	VISITOR("visitor");
+	TEACHER("teacher");
 
 	private final String roleName;
 
@@ -21,7 +20,7 @@ public enum RoleName {
 
 	@JsonValue
 	public String getRoleName() {
-		return roleName;
+		return roleName.toUpperCase();
 	}
 	
 	@JsonCreator

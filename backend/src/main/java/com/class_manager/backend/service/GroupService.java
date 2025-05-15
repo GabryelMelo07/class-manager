@@ -10,28 +10,33 @@ import com.class_manager.backend.repository.GroupRepository;
 import com.class_manager.backend.utils.Patcher;
 
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class GroupService {
 
 	private final GroupRepository groupRepository;
 	private final ClassRoomRepository classRoomRepository;
 	private final DisciplineRepository disciplineRepository;
+	private final SemesterService semesterService;
 
 	public GroupService(GroupRepository groupRepository, ClassRoomRepository classRoomRepository,
-			DisciplineRepository disciplineRepository) {
+			DisciplineRepository disciplineRepository, SemesterService semesterService) {
 		this.groupRepository = groupRepository;
 		this.classRoomRepository = classRoomRepository;
 		this.disciplineRepository = disciplineRepository;
+		this.semesterService = semesterService;
 	}
 
-	public List<Group> findAll() {
-		return groupRepository.findAll();
+	public Page<Group> findAll(Pageable pageable) {
+		return groupRepository.findAll(pageable);
 	}
 
 	public Optional<Group> findById(Long id) {
@@ -51,7 +56,8 @@ public class GroupService {
 
 		newGroup.setDiscipline(discipline);
 		newGroup.setClassRoom(classRoom);
-		
+		newGroup.setSemester(semesterService.getCurrentSemester());
+
 		return groupRepository.save(newGroup);
 	}
 

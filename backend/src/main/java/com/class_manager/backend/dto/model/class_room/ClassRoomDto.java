@@ -1,8 +1,10 @@
 package com.class_manager.backend.dto.model.class_room;
 
+import com.class_manager.backend.decorators.ValidString;
+
 public record ClassRoomDto(
-	String name,
-	String abbreviation,
+	@ValidString String name,
+	@ValidString String abbreviation,
 	String location
 ) {
 }

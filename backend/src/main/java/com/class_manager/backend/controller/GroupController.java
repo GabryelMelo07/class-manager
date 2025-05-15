@@ -4,11 +4,11 @@ import com.class_manager.backend.dto.model.group.GroupDto;
 import com.class_manager.backend.model.Group;
 import com.class_manager.backend.service.GroupService;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/groups")
@@ -21,8 +21,8 @@ public class GroupController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Group>> findAll() {
-        return ResponseEntity.ok(groupService.findAll());
+    public ResponseEntity<Page<Group>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(groupService.findAll(pageable));
     }
 
     @GetMapping("/{id}")

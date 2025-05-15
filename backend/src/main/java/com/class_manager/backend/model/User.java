@@ -1,9 +1,13 @@
 package com.class_manager.backend.model;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 
@@ -13,17 +17,17 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "users")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Data
 @NoArgsConstructor
 public class User {
@@ -45,16 +49,29 @@ public class User {
     @Column(nullable = false, length = 50)
     private String surname;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles;
 
-    public User(String email, String password, String name, String surname, Role role) {
+	@OneToOne(mappedBy = "coordinator")
+    @JsonIgnore
+    private Course coordinatedCourse;
+
+	@OneToMany(mappedBy = "teacher")
+    @JsonIgnore
+    private List<Discipline> disciplines;
+	
+    public User(String email, String password, String name, String surname, Set<Role> roles) {
 		this.email = email;
         this.password = password;
         this.name = name;
         this.surname = surname;
-        this.role = role;
+        this.roles = roles;
+		this.disciplines = new ArrayList<>();
     }
 
     public boolean isPasswordCorrect(String password, PasswordEncoder passwordEncoder) {

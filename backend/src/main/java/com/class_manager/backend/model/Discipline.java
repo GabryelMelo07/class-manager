@@ -28,13 +28,18 @@ public class Discipline {
 	@Column(nullable = false, length = 50)
 	private String name;
 	
-	@Column(nullable = false, length = 10)
+	@Column(nullable = false, length = 15)
 	private String abbreviation;
+
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "course_id", nullable = false)
+	@JsonIgnoreProperties({"disciplines"})
+	private Course course;
 
 	@ManyToOne(cascade = CascadeType.PERSIST)
 	@JoinColumn(name = "teacher_id")
-	@JsonIgnoreProperties("disciplines")
-	private Teacher teacher;
+	@JsonIgnoreProperties({"coordinatedCourse", "teachingCourses", "disciplines", "roles"})
+	private User teacher;
 	
 	public Discipline(DisciplineDto createDisciplineDto) {
 		this.name = createDisciplineDto.name();
