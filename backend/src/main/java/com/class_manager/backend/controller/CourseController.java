@@ -4,6 +4,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -32,8 +34,14 @@ public class CourseController {
 	}
 
 	@GetMapping
-	public ResponseEntity<Page<Course>> findAll(Pageable pageable) {
-		return ResponseEntity.ok(courseService.findAll(pageable));
+	public ResponseEntity<Page<Course>> findAll(Pageable pageable, JwtAuthenticationToken token) {
+		return ResponseEntity.ok(courseService.findAllByUser(pageable, token));
+	}
+
+	@GetMapping("/admin")
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+	public ResponseEntity<Page<Course>> findAllCoursesByAdmin(Pageable pageable, JwtAuthenticationToken token) {
+		return ResponseEntity.ok(courseService.findAll(pageable, token));
 	}
 
 	@GetMapping("/{id}")

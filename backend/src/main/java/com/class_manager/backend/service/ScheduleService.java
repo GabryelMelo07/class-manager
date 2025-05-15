@@ -22,10 +22,12 @@ public class ScheduleService {
 
 	private final ScheduleRepository scheduleRepository;
 	private final GroupRepository groupRepository;
+	private final SemesterService semesterService;
 
-	public ScheduleService(ScheduleRepository scheduleRepository, GroupRepository groupRepository) {
+	public ScheduleService(ScheduleRepository scheduleRepository, GroupRepository groupRepository, SemesterService semesterService) {
 		this.scheduleRepository = scheduleRepository;
 		this.groupRepository = groupRepository;
+		this.semesterService = semesterService;
 	}
 
 	public Page<Schedule> findAll(Pageable pageable) {
@@ -43,7 +45,8 @@ public class ScheduleService {
 		Schedule newSchedule = new Schedule(dto);
 
 		newSchedule.setGroup(group);
-		
+		newSchedule.setSemester(semesterService.getCurrentSemester());
+
 		return scheduleRepository.save(newSchedule);
 	}
 

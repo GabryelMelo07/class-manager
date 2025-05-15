@@ -28,7 +28,7 @@ public class Discipline {
 	@Column(nullable = false, length = 50)
 	private String name;
 	
-	@Column(nullable = false, length = 10)
+	@Column(nullable = false, length = 15)
 	private String abbreviation;
 
 	@ManyToOne(optional = false)

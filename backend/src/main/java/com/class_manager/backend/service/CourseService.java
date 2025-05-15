@@ -5,16 +5,18 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import com.class_manager.backend.dto.model.course.CourseDto;
+import com.class_manager.backend.exceptions.UnauthorizedException;
 import com.class_manager.backend.model.Course;
 import com.class_manager.backend.model.User;
 import com.class_manager.backend.repository.CourseRepository;
 import com.class_manager.backend.repository.UserRepository;
 import com.class_manager.backend.utils.Patcher;
 
-import static com.class_manager.backend.utils.UserScopeUtils.isCoordinator;
+import static com.class_manager.backend.utils.UserScopeUtils.*;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +33,25 @@ public class CourseService {
 		this.userRepository = userRepository;
 	}
 
-	public Page<Course> findAll(Pageable pageable) {
+	public Page<Course> findAllByUser(Pageable pageable, JwtAuthenticationToken token) {
+		UUID userId = UUID.fromString(token.getName());
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new EntityNotFoundException(
+						"User not found with id: " + userId));
+
+		return courseRepository.findAllByUser(user, pageable);
+	}
+
+	public Page<Course> findAll(Pageable pageable, JwtAuthenticationToken token) {
+		UUID userId = UUID.fromString(token.getName());
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new EntityNotFoundException(
+						"User not found with id: " + userId));
+
+		if (!isAdmin(user)) {
+			throw new UnauthorizedException();
+		}
+
 		return courseRepository.findAll(pageable);
 	}
 

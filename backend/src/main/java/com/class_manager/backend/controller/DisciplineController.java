@@ -25,8 +25,8 @@ public class DisciplineController {
 	}
 
 	@GetMapping
-	public ResponseEntity<Page<Discipline>> findAll(Pageable pageable) {
-		return ResponseEntity.ok(disciplineService.findAll(pageable));
+	public ResponseEntity<Page<Discipline>> findAll(@RequestParam Long courseId, Pageable pageable) {
+		return ResponseEntity.ok(disciplineService.findAll(courseId, pageable));
 	}
 
 	@GetMapping("/{id}")

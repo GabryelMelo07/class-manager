@@ -35,8 +35,12 @@ public class DisciplineService {
 		this.userRepository = userRepository;
 	}
 
-	public Page<Discipline> findAll(Pageable pageable) {
-		return disciplineRepository.findAll(pageable);
+	public Page<Discipline> findAll(Long courseId, Pageable pageable) {
+		if (!courseRepository.existsById(courseId)) {
+        	throw new EntityNotFoundException("Course not found with id: " + courseId);
+    	}
+		
+		return disciplineRepository.findByCourseId(courseId, pageable);
 	}
 
 	public Optional<Discipline> findById(Long id) {

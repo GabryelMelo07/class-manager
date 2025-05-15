@@ -22,4 +22,8 @@ public class UserScopeUtils {
 		return hasRole(user, RoleName.COORDINATOR);
 	}
 
+	public static boolean isAdmin(User user) {
+		return hasRole(user, RoleName.ADMIN);
+	}
+
 }
