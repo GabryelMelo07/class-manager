@@ -2,6 +2,8 @@ package com.class_manager.backend.service;
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.class_manager.backend.enums.SemesterStatus;
@@ -53,6 +55,10 @@ public class SemesterService {
 		log.info("Actual semester did not exist yet, creating new current semester");
 		Semester semester = createCurrentSemester();
 		return semesterRepository.save(semester);
+	}
+
+	public Page<Semester> findAll(Pageable pageable) {
+		return semesterRepository.findAll(pageable);
 	}
 
 }

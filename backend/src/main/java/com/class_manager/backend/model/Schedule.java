@@ -13,7 +13,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity
 @Table(name = "schedule", 
     uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"class_room_id", "day_of_week", "start_time", "end_time"})
+        @UniqueConstraint(columnNames = {"class_room_id", "day_of_week", "start_time", "end_time"}),
+		@UniqueConstraint(columnNames = {"group_id", "day_of_week", "start_time", "end_time"})
     }
 )
 @Data

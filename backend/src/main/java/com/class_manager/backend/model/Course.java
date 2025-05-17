@@ -41,6 +41,10 @@ public class Course {
 	@JsonIgnoreProperties({"course"})
 	private List<Discipline> disciplines;
 
+	@OneToOne(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+	// @JsonIgnoreProperties("timeSlot")
+	private TimeSlot timeSlot;
+
 	public Course(CourseDto createCourseDto) {
 		this.name = createCourseDto.name();
 		this.coordinator = null;
