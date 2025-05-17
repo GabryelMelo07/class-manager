@@ -33,6 +33,13 @@ public class CourseController {
 		this.courseService = courseService;
 	}
 
+	/*
+	 * TODO: O coordenador deve receber no retorno 2 listas,
+	 * A primeira lista dos cursos que ele é coordenador
+	 * E a segunda lista dos cursos que ele é professor, ou seja,
+	 * não tem permissão para editar.
+	 */
+	
 	@GetMapping
 	public ResponseEntity<Page<Course>> findAll(Pageable pageable, JwtAuthenticationToken token) {
 		return ResponseEntity.ok(courseService.findAllByUser(pageable, token));

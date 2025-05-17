@@ -42,6 +42,9 @@ public class Group {
     @JoinColumn(name = "semester_id", nullable = false)
     private Semester semester;
 
+	@Column
+	private String color;
+
 	public Group(GroupDto createGroupDto) {
 		this.name = createGroupDto.name();
 		this.abbreviation = createGroupDto.abbreviation();

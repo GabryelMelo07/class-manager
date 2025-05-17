@@ -1,9 +1,29 @@
-"use client";
+'use client';
+
+import { AdminView } from "@/components/views/AdminView";
+import { CoordinatorView } from "@/components/views/CoordinatorView";
+import { PublicView } from "@/components/views/PublicView";
+import { TeacherView } from "@/components/views/TeacherView";
+import { getAccessToken, getUserScope } from "@/lib/auth";
 
 export function Home() {
-  return (
-    <div className="flex flex-col items-center justify-center h-screen gap-4">
-      <h1>Welcome to the Home Page</h1>
-    </div>
-  );
+  const token = getAccessToken();
+  const scopes = getUserScope(token!);
+
+  // Verifica se o usuário é ADMIN
+  if (scopes.includes("ADMIN")) {
+    return <AdminView />;
+  }
+
+  // Verifica se o usuário é COORDINATOR
+  if (scopes.includes("COORDINATOR")) {
+    return <CoordinatorView />;
+  }
+
+  // Verifica se o usuário é TEACHER
+  if (scopes.includes("TEACHER")) {
+    return <TeacherView />;
+  }
+
+  return <PublicView />;
 }

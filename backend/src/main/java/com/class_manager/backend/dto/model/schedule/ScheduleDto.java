@@ -4,10 +4,12 @@ import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 
 public record ScheduleDto(
-		DayOfWeek dayOfWeek,
+		@NotNull DayOfWeek dayOfWeek,
 		@Schema(type = "String", pattern = "HH:mm") LocalTime startTime,
 		@Schema(type = "String", pattern = "HH:mm") LocalTime endTime,
-		Long groupId) {
+		Long groupId,
+		Long scheduleId) {
 }

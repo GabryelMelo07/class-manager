@@ -56,7 +56,7 @@ public class Semester {
         int semesterNumber = SemesterUtils.getCurrentSemesterNumber();
         
         Semester semester = new Semester();
-        semester.name = "SEMESTER-" + year + "/" + semesterNumber;
+        semester.name = "SEMESTRE-" + year + "/" + semesterNumber;
 		semester.status = SemesterStatus.ACTIVE;
         semester.startDate = SemesterUtils.getSemesterStartDate(year, semesterNumber);
         semester.endDate = SemesterUtils.getSemesterEndDate(year, semesterNumber);
