@@ -3,9 +3,20 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
-import { Input } from '@/components/ui/input';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { setTokens } from '@/lib/auth';
+import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-
+import { Input } from '@/components/ui/input';
+import {
+  CalendarIcon,
+  EyeIcon,
+  EyeOffIcon,
+  Loader2,
+  LockIcon,
+  MailIcon,
+} from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -14,12 +25,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { setTokens } from '@/lib/auth';
-import api from '@/lib/api';
+import { LoginBenefits } from '@/components/login-benefits';
 
 const formSchema = z.object({
   'email-input-0': z.string().min(1, { message: 'This field is required' }),
@@ -28,15 +35,16 @@ const formSchema = z.object({
 });
 
 export function Login() {
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { setAuthenticated } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      'email-input-0': '',
-      'password-input-0': '',
+      'email-input-0': 'admin@riogrande.ifrs.edu.br',
+      'password-input-0': 'admin',
       'button-0': '',
     },
   });
@@ -56,6 +64,7 @@ export function Login() {
       setAuthenticated(true);
       navigate('/');
     } catch (err) {
+      // TODO: TROCAR POR UM ALERT
       alert('Credenciais inválidas.');
     } finally {
       setLoading(false);
@@ -63,97 +72,156 @@ export function Login() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen gap-4 px-4">
-      <div className="w-full max-w-lg bg-gray-100 rounded-lg shadow-lg p-10">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-8 @container w-full max-w-md mx-auto"
-          >
-            <div>
-              <h1>Class Manager Login</h1>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
+      <header className="bg-indigo-600 text-white shadow-lg">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <CalendarIcon className="h-6 w-6" />
+              <h1 className="text-2xl font-bold">Organizador Acadêmico</h1>
             </div>
-            <div className="grid grid-cols-12 gap-4">
-              <FormField
-                control={form.control}
-                name="email-input-0"
-                render={({ field }) => (
-                  <FormItem className="col-span-12 col-start-auto flex flex-col gap-2 space-y-0 items-start">
-                    <FormLabel className="flex shrink-0">Email</FormLabel>
+          </div>
+        </div>
+      </header>
 
-                    <div className="w-full">
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col md:flex-row">
+        {/* Left Side - Login Form */}
+        <div className="w-full md:w-1/2 p-8 flex items-center justify-center">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-800">
+                Bem-vindo de volta!
+              </h2>
+              <p className="text-gray-600 mt-2">
+                Acesse sua conta para gerenciar seus cursos e atividades
+                acadêmicas
+              </p>
+            </div>
+
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
+                <FormField
+                  control={form.control}
+                  name="email-input-0"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input
-                          key="email-input-0"
-                          placeholder="Insira seu e-mail"
-                          type="email"
-                          id="email-input-0"
-                          className=""
-                          {...field}
-                        />
+                        <div className="relative">
+                          <MailIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            {...field}
+                            key="email-input-0"
+                            placeholder="Insira seu e-mail"
+                            type="email"
+                            id="email-input-0"
+                            className="pl-10"
+                            value={
+                              'admin@riogrande.ifrs.edu.br'
+                            } /* VALOR PADRÃO PARA FACILITAR O TESTE. TODO: REMOVER AO TERMINAR OS TESTES */
+                          />
+                        </div>
                       </FormControl>
-
                       <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-12 gap-4">
-              <FormField
-                control={form.control}
-                name="password-input-0"
-                render={({ field }) => (
-                  <FormItem className="col-span-12 col-start-auto flex flex-col gap-2 space-y-0 items-start">
-                    <FormLabel className="flex shrink-0">Senha</FormLabel>
+                    </FormItem>
+                  )}
+                />
 
-                    <div className="w-full">
+                <FormField
+                  control={form.control}
+                  name="password-input-0"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Senha</FormLabel>
                       <FormControl>
-                        <Input
-                          key="password-input-0"
-                          placeholder="Insira sua senha"
-                          type="password"
-                          id="password-input-0"
-                          className=""
-                          {...field}
-                        />
+                        <div className="relative">
+                          <LockIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            {...field}
+                            key="password-input-0"
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="Insira sua senha"
+                            className="pl-10 pr-10"
+                            id="password-input-0"
+                            value={
+                              'admin'
+                            } /* VALOR PADRÃO PARA FACILITAR O TESTE. TODO: REMOVER AO TERMINAR OS TESTES */
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1 h-8 w-8 text-gray-400 hover:text-gray-600"
+                            onClick={() => setShowPassword(!showPassword)}
+                            disabled={loading}
+                          >
+                            {showPassword ? (
+                              <EyeOffIcon className="h-4 w-4" />
+                            ) : (
+                              <EyeIcon className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                       </FormControl>
-
                       <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-12 gap-4">
-              <FormField
-                control={form.control}
-                name="button-0"
-                render={() => (
-                  <FormItem className="col-span-12 col-start-auto flex flex-col gap-2 space-y-0 items-start">
-                    <FormLabel className="hidden shrink-0">Login</FormLabel>
+                    </FormItem>
+                  )}
+                />
 
-                    <div className="w-full">
-                      <FormControl>
-                        <Button
-                          key="button-0"
-                          id="button-0"
-                          className="w-full"
-                          disabled={loading}
-                        >
-                          {loading ? 'Entrando...' : 'Entrar'}
-                        </Button>
-                      </FormControl>
+                <Button
+                  type="submit"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 />
+                      Entrando...
+                    </>
+                  ) : (
+                    'Entrar'
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </div>
+        </div>
 
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
+        {/* Right Side - Benefits */}
+        <div className="hidden md:block md:w-1/2 bg-indigo-600">
+          <LoginBenefits />
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white py-6 border-t">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-600 text-sm">
+              © 2023 Organizador Acadêmico. Todos os direitos reservados.
+            </p>
+            <div className="flex space-x-4 mt-4 md:mt-0">
+              <a
+                href="#"
+                className="text-gray-600 hover:text-indigo-600 text-sm"
+              >
+                Termos de Uso
+              </a>
+              <a
+                href="#"
+                className="text-gray-600 hover:text-indigo-600 text-sm"
+              >
+                Política de Privacidade
+              </a>
             </div>
-          </form>
-        </Form>
-      </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
