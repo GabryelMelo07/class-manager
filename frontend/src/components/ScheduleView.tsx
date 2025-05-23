@@ -653,7 +653,7 @@ function ScheduleTable({
             {sortedDays.map(([apiDay, ptDay]) => (
               <th
                 key={apiDay}
-                className="py-3 text-center font-medium text-gray-500 min-w-[200px] max-w-[200px]"
+                className="py-3 text-center font-medium text-gray-500 w-[200px]"
               >
                 {ptDay}
               </th>
@@ -713,7 +713,7 @@ function TableCell({
   return (
     <td
       ref={setNodeRef}
-      className={`p-2 min-h-16 min-w-[200px] max-w-[200px] ${
+      className={`p-2 min-h-16 ${
         isOver ? 'bg-indigo-50' : ''
       } transition-colors`}
     >
@@ -784,28 +784,16 @@ function ScheduleItem({
         schedule.group?.color
       }-500 p-2 rounded mb-2 ${draggable ? 'cursor-move' : ''}`}
     >
-      <div className="flex justify-between items-start gap-2">
-        <h4 className="font-medium text-sm flex-1 min-w-0 break-words">
-          {schedule.group?.abbreviation}
-        </h4>
-        <Button
-          variant={'ghost'}
-          size="icon"
-          className="w-4 h-4 text-gray-400 hover:text-gray-600 hover:bg-red-400"
-        >
-          <X className="shrink-0" strokeWidth={2} />
-        </Button>
-      </div>
-
-      <p className="text-xs text-gray-600">{schedule.group?.name}</p>
-      <div className="flex justify-between">
-        <p className="text-xs text-gray-500 ">
-          {schedule.group?.classRoom?.abbreviation}
-        </p>
-        <p className="text-xs text-gray-500">
-          {schedule.group?.discipline?.teacher?.fullName}
-        </p>
-      </div>
+      <h4 className="font-medium text-sm flex-1 break-words">
+        {schedule.group?.abbreviation}
+      </h4>
+      <p className="text-xs text-gray-600 break-words">{schedule.group?.name}</p>
+      <p className="text-xs text-gray-500 break-words">
+        {schedule.group?.classRoom?.abbreviation}
+      </p>
+      <p className="mt-2 text-xs text-gray-500 break-words">
+        {schedule.group?.discipline?.teacher?.fullName}
+      </p>
     </div>
   );
 }
