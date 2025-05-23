@@ -3,6 +3,8 @@ package com.class_manager.backend.controller;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,15 +30,15 @@ public class ExceptionHandlerController extends ResponseEntityExceptionHandler {
 	private ResponseEntity<RestErrorMessage> buildResponse(HttpStatus status, String message, Throwable throwable) {
 		if (throwable != null) {
 			String errorMessage = """
-				\n#####################################
+			\n#####################################
 
-				Http Status: %s
+			Http Status: %s
 				
-				Error Message: %s
+			Error Message: %s
 
-				Stack Trace: %s
+			Stack Trace: %s
 				
-				#####################################
+			#####################################
 			""".formatted(status.value(), message, throwable.getMessage());
 			logger.error(errorMessage, throwable);
 		}
@@ -78,6 +80,16 @@ public class ExceptionHandlerController extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(ResetPasswordTokenInvalidException.class)
 	private ResponseEntity<RestErrorMessage> resetPasswordTokenInvalidExceptionHandler(ResetPasswordTokenInvalidException exception) {
 		return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage(), exception);
+	}
+
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	private ResponseEntity<RestErrorMessage> dataIntegrityViolationExceptionHandler(DataIntegrityViolationException exception) {
+		return buildResponse(HttpStatus.CONFLICT, "Data Integrity Violation", exception);
+	}
+
+	@ExceptionHandler(DataAccessException.class)
+	private ResponseEntity<RestErrorMessage> dataAccessExceptionHandler(DataAccessException exception) {
+		return buildResponse(HttpStatus.BAD_REQUEST, "Data access error", exception);
 	}
 
 	@ExceptionHandler(Exception.class)

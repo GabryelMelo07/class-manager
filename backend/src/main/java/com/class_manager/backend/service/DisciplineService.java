@@ -12,6 +12,7 @@ import com.class_manager.backend.utils.Patcher;
 import static com.class_manager.backend.utils.UserScopeUtils.isTeacher;
 
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
@@ -23,17 +24,12 @@ import java.util.UUID;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class DisciplineService {
 
 	private final DisciplineRepository disciplineRepository;
 	private final CourseRepository courseRepository;
 	private final UserRepository userRepository;
-
-	public DisciplineService(DisciplineRepository disciplineRepository, CourseRepository courseRepository, UserRepository userRepository) {
-		this.disciplineRepository = disciplineRepository;
-		this.courseRepository = courseRepository;
-		this.userRepository = userRepository;
-	}
 
 	public Page<Discipline> findAll(Long courseId, Pageable pageable) {
 		if (!courseRepository.existsById(courseId)) {

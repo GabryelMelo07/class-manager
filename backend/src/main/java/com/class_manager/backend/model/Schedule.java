@@ -47,7 +47,6 @@ public class Schedule {
     public Schedule(ScheduleDto dto) {
         this.dayOfWeek = dto.dayOfWeek();
         this.startTime = dto.startTime();
-        this.endTime = dto.endTime();
     }
 
 }

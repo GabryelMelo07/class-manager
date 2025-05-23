@@ -7,28 +7,28 @@ import com.class_manager.backend.service.DisciplineService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/disciplines")
 public class DisciplineController {
 
 	private final DisciplineService disciplineService;
-
-	public DisciplineController(DisciplineService disciplineService) {
-		this.disciplineService = disciplineService;
-	}
 
 	@GetMapping
 	public ResponseEntity<Page<Discipline>> findAll(@RequestParam Long courseId, Pageable pageable) {
 		return ResponseEntity.ok(disciplineService.findAll(courseId, pageable));
 	}
 
+	// TODO: POSSÍVELMENTE NÃO SERÁ USADO, ANALISAR E REMOVER
 	@GetMapping("/{id}")
 	public ResponseEntity<Discipline> findById(@PathVariable Long id) {
 		return disciplineService.findById(id)
@@ -37,6 +37,7 @@ public class DisciplineController {
 	}
 
 	@PostMapping
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
 	public ResponseEntity<Discipline> save(@RequestBody DisciplineDto dto) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(disciplineService.save(dto));
 	}
@@ -48,11 +49,13 @@ public class DisciplineController {
 			@ApiResponse(responseCode = "400", description = "Invalid teacher provided")
 	})
 	@PatchMapping("/{id}")
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
 	public ResponseEntity<Discipline> patch(@PathVariable Long id, @RequestBody DisciplineDto disciplineDto) {
 		return ResponseEntity.ok(disciplineService.patch(id, disciplineDto));
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
 		disciplineService.deleteById(id);
 		return ResponseEntity.noContent().build();

@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 public record ScheduleDto(
 		@NotNull DayOfWeek dayOfWeek,
 		@Schema(type = "String", pattern = "HH:mm") LocalTime startTime,
-		@Schema(type = "String", pattern = "HH:mm") LocalTime endTime,
 		Long groupId,
+		Long semesterId,
 		Long scheduleId) {
 }

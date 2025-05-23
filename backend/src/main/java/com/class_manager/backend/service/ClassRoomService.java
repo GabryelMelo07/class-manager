@@ -6,6 +6,7 @@ import com.class_manager.backend.repository.ClassRoomRepository;
 import com.class_manager.backend.utils.Patcher;
 
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
@@ -16,13 +17,10 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ClassRoomService {
 
 	private final ClassRoomRepository classRoomRepository;
-
-	public ClassRoomService(ClassRoomRepository classRoomRepository) {
-		this.classRoomRepository = classRoomRepository;
-	}
 
 	public Page<ClassRoom> findAll(Pageable pageable) {
 		return classRoomRepository.findAll(pageable);

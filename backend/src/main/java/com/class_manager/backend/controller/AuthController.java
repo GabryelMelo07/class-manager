@@ -55,6 +55,7 @@ public class AuthController {
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
+	// TODO: POSSÍVELMENTE NÃO SERÁ USADO, ANALISAR E REMOVER
 	@Operation(summary = "Listar usuários", description = "Este recurso só pode ser usado por usuários administradores e lista todos usuários cadastrados no banco de dados")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = AuthResponses.LISTAR_USUARIOS)))

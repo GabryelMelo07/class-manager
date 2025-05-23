@@ -4,40 +4,41 @@ import com.class_manager.backend.dto.model.schedule.ScheduleDto;
 import com.class_manager.backend.model.Schedule;
 import com.class_manager.backend.service.ScheduleService;
 
+import lombok.RequiredArgsConstructor;
+
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/schedules")
 public class ScheduleController {
 
 	private final ScheduleService scheduleService;
 
-	public ScheduleController(ScheduleService scheduleService) {
-		this.scheduleService = scheduleService;
-	}
-
 	@GetMapping
-	public ResponseEntity<List<Schedule>> findAll(Long semesterId) {
-		return ResponseEntity.ok(scheduleService.findAll(semesterId));
+	public ResponseEntity<List<Schedule>> findAll(Long semesterId, Long courseId) {
+		return ResponseEntity.ok(scheduleService.findAll(semesterId, courseId));
 	}
 
-	@GetMapping("/{id}")
-	public ResponseEntity<Schedule> findById(@PathVariable Long id) {
-		return scheduleService.findById(id)
-				.map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+	@GetMapping("/semester/{semesterId}/teacher/{teacherId}")
+	public ResponseEntity<List<Schedule>> findByTeacher(@PathVariable Long semesterId, @PathVariable UUID teacherId) {
+		return ResponseEntity.ok(scheduleService.findByTeacher(semesterId, teacherId));
 	}
 
 	@PostMapping("/create-or-update")
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_COORDINATOR')")
 	public ResponseEntity<Schedule> save(@RequestBody ScheduleDto dto) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(scheduleService.saveOrUpdate(dto));
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_COORDINATOR')")
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
 		scheduleService.deleteById(id);
 		return ResponseEntity.noContent().build();

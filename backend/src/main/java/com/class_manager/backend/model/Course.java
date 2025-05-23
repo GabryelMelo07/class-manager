@@ -31,6 +31,9 @@ public class Course {
 
 	@Column(nullable = false, unique = true)
     private String name;
+	
+	@Column(nullable = false, length = 10)
+	private String abbreviation;
 
 	@OneToOne
     @JoinColumn(name = "coordinator_id", unique = true)
@@ -42,11 +45,11 @@ public class Course {
 	private List<Discipline> disciplines;
 
 	@OneToOne(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-	// @JsonIgnoreProperties("timeSlot")
 	private TimeSlot timeSlot;
 
-	public Course(CourseDto createCourseDto) {
-		this.name = createCourseDto.name();
+	public Course(CourseDto dto) {
+		this.name = dto.name();
+		this.abbreviation = dto.abbreviation();
 		this.coordinator = null;
 		this.disciplines = new ArrayList<>();
 	}

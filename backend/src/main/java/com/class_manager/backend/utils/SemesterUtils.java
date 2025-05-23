@@ -4,12 +4,7 @@ import java.time.LocalDate;
 
 public class SemesterUtils {
 
-	public static int getCurrentYear() {
-		return LocalDate.now().getYear();
-	}
-
-	public static int getCurrentSemesterNumber() {
-		int month = LocalDate.now().getMonthValue();
+	public static int getSemesterNumber(int month) {
 		return (month <= 6) ? 1 : 2;
 	}
 
