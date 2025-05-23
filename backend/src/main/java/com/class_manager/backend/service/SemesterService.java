@@ -25,7 +25,7 @@ public class SemesterService {
 	private final SemesterRepository semesterRepository;
 
 	public Page<Semester> findAll(Pageable pageable) {
-		return semesterRepository.findAll(pageable);
+		return semesterRepository.findAllOrderByStatusActive(pageable);
 	}
 
 	public Semester findAndValidateSemesterById(Long id) {
