@@ -87,3 +87,8 @@ export interface ScheduleItem {
     id: number;
   };
 }
+
+export interface DefaultFormProps {
+  onSubmit: (data: any) => void;
+  onCancel: () => void;
+}

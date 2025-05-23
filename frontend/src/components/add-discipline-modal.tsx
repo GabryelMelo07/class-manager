@@ -51,21 +51,17 @@ export function AddDisciplineModal({
 
   const [formData, setFormData] = useState(initialFormState);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
 
   useEffect(() => {
     if (!isOpen) return;
 
     const fetchData = async () => {
       try {
-        const [coursesRes, teachersRes] = await Promise.all([
+        const [coursesRes] = await Promise.all([
           api.get('/api/v1/courses'),
-          // TODO: Criar a rota para busca de professores e alterar aqui
-          api.get('/api/v1/auth/users'),
         ]);
 
         setCourses(coursesRes.data.content);
-        setTeachers(teachersRes.data.content);
       } catch (error) {
         console.error('Erro ao buscar dados:', error);
       }

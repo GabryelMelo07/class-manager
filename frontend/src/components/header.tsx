@@ -1,28 +1,49 @@
 import { Button } from '@/components/ui/button';
 import { clearTokens } from '@/lib/auth';
 import { UserTypeEnum } from '@/utils/UserTypeEnum';
-import { CalendarIcon, LogOut } from 'lucide-react';
+import {
+  CalendarIcon,
+  ChevronDown,
+  ChevronUp,
+  LogOut,
+  Moon,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { GenericModal } from './generic-modal';
 import { useState } from 'react';
+import { DynamicModal } from './dynamic-modal';
+import UserForm from '@/components/forms/user-form';
+import CourseForm from '@/components/forms/course-form';
 
 interface HeaderProps {
   userType: UserTypeEnum;
 }
 
 export function Header({ userType }: HeaderProps) {
-  const [openModal, setOpenModal] = useState<
-    null | 'user' | 'course' | 'subject' | 'schedule'
-  >(null);
+  const [openModal, setOpenModal] = useState<string | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const handleSave = () => {
-    // Lógica de salvamento...
-    setOpenModal(null); // ← Usando a função corretamente
+  const handleUserSubmit = (data: any) => {
+    console.log('Dados do usuário:', data);
+    // Aqui você faria a requisição para salvar o usuário
+    setOpenModal(null);
+  };
+
+  const handleCourseSubmit = (data: any) => {
+    console.log('Dados do curso:', data);
+    // Aqui você faria a requisição para salvar o curso
+    setOpenModal(null);
+  };
+
+  const handleOpenModal = (modalType: string) => {
+    setDropdownOpen(false); // Fecha o dropdown
+    setTimeout(() => {
+      setOpenModal(modalType); // Abre o modal após um pequeno delay
+    }, 100);
   };
 
   return (
@@ -36,81 +57,82 @@ export function Header({ userType }: HeaderProps) {
             </div>
 
             <div className="flex items-center space-x-4">
-              <DropdownMenu>
+              <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
                 <DropdownMenuTrigger asChild>
                   {/* TODO: Remover o background ao fazer hover e adicionar underline */}
-                  <Button variant="ghost">Cadastros</Button>
+                  <Button
+                    variant="ghost"
+                    className="text-md font-semibold hover:bg-transparent hover:text-stone-300"
+                  >
+                    Cadastros{' '}
+                    {dropdownOpen ? (
+                      <ChevronUp className="font-semibold" strokeWidth={2} />
+                    ) : (
+                      <ChevronDown className="font-semibold" strokeWidth={2} />
+                    )}
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-white">
-                  <DropdownMenuItem onClick={() => setOpenModal('user')}>
+                  <DropdownMenuItem onClick={() => handleOpenModal('user')}>
                     Usuário
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setOpenModal('course')}>
+                  <DropdownMenuItem onClick={() => handleOpenModal('course')}>
                     Curso
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setOpenModal('subject')}>
-                    Disciplina
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setOpenModal('schedule')}>
-                    Horários por curso
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              {/* Modals */}
+              <DynamicModal
+                trigger={<div style={{ display: 'none' }} />}
+                title="Cadastrar Usuário"
+                description="Preencha os dados para cadastrar um novo usuário"
+                open={openModal === 'user'}
+                onOpenChange={(open) => setOpenModal(open ? 'user' : null)}
+              >
+                <UserForm
+                  onSubmit={handleUserSubmit}
+                  onCancel={() => setOpenModal(null)}
+                />
+              </DynamicModal>
+
+              <DynamicModal
+                trigger={<div style={{ display: 'none' }} />}
+                title="Cadastrar Curso"
+                description="Preencha os dados para cadastrar um novo curso"
+                open={openModal === 'course'}
+                onOpenChange={(open) => setOpenModal(open ? 'course' : null)}
+              >
+                <CourseForm
+                  onSubmit={handleCourseSubmit}
+                  onCancel={() => setOpenModal(null)}
+                />
+              </DynamicModal>
+
               {userType !== UserTypeEnum.PUBLIC && (
                 <Button
-                  variant="outline"
-                  className="bg-white text-indigo-600 hover:bg-indigo-50"
+                  variant="ghost"
+                  className="font-semibold text-md hover:bg-transparent hover:text-stone-300"
                   onClick={() => {
                     clearTokens();
                     window.location.reload();
                   }}
                 >
-                  Logout
-                  <LogOut className="h-4 w-4 ml-2" />
+                  Sair
+                  <LogOut className="ml-2" strokeWidth={2} />
                 </Button>
               )}
+
+              <Button
+                variant="ghost"
+                className="font-semibold bg-transparent hover:bg-transparent hover:text-stone-200"
+              >
+                <Moon strokeWidth={2} />
+              </Button>
             </div>
           </div>
         </div>
       </header>
-
-      {/* Modals */}
-      <GenericModal
-        title="Cadastrar Usuário"
-        isOpen={openModal === 'user'}
-        onClose={() => setOpenModal(null)}
-        onSave={handleSave}
-      >
-        <p>Cadastro de usuário</p>
-      </GenericModal>
-
-      <GenericModal
-        title="Cadastrar Curso"
-        isOpen={openModal === 'course'}
-        onClose={() => setOpenModal(null)}
-        onSave={handleSave}
-      >
-        <p>Cadastro de curso</p>
-      </GenericModal>
-
-      <GenericModal
-        title="Cadastrar Disciplina"
-        isOpen={openModal === 'subject'}
-        onClose={() => setOpenModal(null)}
-        onSave={handleSave}
-      >
-        <p>Cadastro de disciplina</p>
-      </GenericModal>
-
-      <GenericModal
-        title="Cadastrar Horários por Curso"
-        isOpen={openModal === 'schedule'}
-        onClose={() => setOpenModal(null)}
-        onSave={handleSave}
-      >
-        <p>Cadastro de horários por curso</p>
-      </GenericModal>
     </>
   );
 }

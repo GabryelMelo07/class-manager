@@ -121,9 +121,9 @@ export function Login() {
                             type="email"
                             id="email-input-0"
                             className="pl-10"
-                            value={
-                              'admin@riogrande.ifrs.edu.br'
-                            } /* VALOR PADRÃO PARA FACILITAR O TESTE. TODO: REMOVER AO TERMINAR OS TESTES */
+                            // value={
+                            //   'admin@riogrande.ifrs.edu.br'
+                            // } /* VALOR PADRÃO PARA FACILITAR O TESTE. TODO: REMOVER AO TERMINAR OS TESTES */
                           />
                         </div>
                       </FormControl>
@@ -148,9 +148,9 @@ export function Login() {
                             placeholder="Insira sua senha"
                             className="pl-10 pr-10"
                             id="password-input-0"
-                            value={
-                              'admin'
-                            } /* VALOR PADRÃO PARA FACILITAR O TESTE. TODO: REMOVER AO TERMINAR OS TESTES */
+                            // value={
+                            //   'admin'
+                            // } /* VALOR PADRÃO PARA FACILITAR O TESTE. TODO: REMOVER AO TERMINAR OS TESTES */
                           />
                           <Button
                             type="button"
@@ -161,9 +161,9 @@ export function Login() {
                             disabled={loading}
                           >
                             {showPassword ? (
-                              <EyeOffIcon className="h-4 w-4" />
+                              <EyeOffIcon className="size-4" />
                             ) : (
-                              <EyeIcon className="h-4 w-4" />
+                              <EyeIcon className="size-4" strokeWidth={2} />
                             )}
                           </Button>
                         </div>

@@ -14,13 +14,15 @@ import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
 import { GroupCard } from './group-card';
 import type { ScheduleItem, Course, Group, Semester } from '@/lib/types';
-import { Loader2 } from 'lucide-react';
+import { Download, Info, Loader2, Plus, X } from 'lucide-react';
 import { formatTimeSlot } from '@/utils/Helpers';
 
 const DAY_ORDER = [
@@ -59,7 +61,6 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
-  // const [timeSlotsData, setTimeSlotsData] = useState<TimeSlot | null>(null);
   const [daysMap, setDaysMap] = useState<Record<string, string>>({});
   const [generatedTimeSlots, setGeneratedTimeSlots] = useState<string[]>([]);
 
@@ -70,17 +71,11 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
   // Fetch courses on mount
   useEffect(() => {
     const fetchCourses = async () => {
-      const endpoint =
-        userType === UserTypeEnum.ADMIN
-          ? '/api/v1/courses/admin'
-          : '/api/v1/courses';
-
       try {
-        // TODO: REMOVER A PAGINAÇÃO DO REQUEST DOS MEUS CURSOS
-        const response = await api.get(`${endpoint}?page=0&size=20`);
-        setCourses(response.data.content);
-        if (response.data.content.length > 0) {
-          setSelectedCourse(response.data.content[0]);
+        const response = await api.get('/api/v1/courses');
+        setCourses(response.data);
+        if (response.data.length > 0) {
+          setSelectedCourse(response.data[0]);
         }
       } catch (error) {
         console.error('Error fetching courses:', error);
@@ -99,7 +94,6 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
         const response = await api.get(
           `/api/v1/time-slots/${selectedCourse.id}`
         );
-        // setTimeSlotsData(response.data);
 
         const daysOrder = response.data.daysOfWeek.sort(
           (a: string, b: string) => {
@@ -165,7 +159,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
 
       try {
         const response = await api.get(
-          `/api/v1/groups?courseId=${selectedCourse.id}&page=${groupsPagination.page}&size=20`
+          `/api/v1/groups/course/${selectedCourse.id}?page=${groupsPagination.page}&size=20`
         );
 
         setGroups((prev) =>
@@ -207,7 +201,19 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           semestersPagination.page === 0 &&
           response.data.content.length > 0
         ) {
-          setSelectedSemester(response.data.content[0]);
+          const currentDate = new Date();
+
+          // Encontrar semestre atual baseado nas datas
+          const currentSemester = response.data.content.find(
+            (semester: Semester) => {
+              const startDate = new Date(semester.startDate);
+              const endDate = new Date(semester.endDate);
+              return currentDate >= startDate && currentDate <= endDate;
+            }
+          );
+
+          // Selecionar o semestre atual ou o primeiro da lista
+          setSelectedSemester(currentSemester || response.data.content[0]);
         }
 
         semestersPagination.setHasMore(
@@ -223,6 +229,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     fetchSemesters();
   }, [semestersPagination.page]);
 
+  // TODO: Adicionar a opção de ver Meus horários
   // Fetch schedules when course or semester changes
   useEffect(() => {
     const fetchSchedules = async () => {
@@ -230,8 +237,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
 
       try {
         const response = await api.get(
-          // `/api/v1/schedules?courseId=${selectedCourse.id}&semesterId=${selectedSemester.id}`
-          `/api/v1/schedules?semesterId=${selectedSemester.id}`
+          `/api/v1/schedules?courseId=${selectedCourse.id}&semesterId=${selectedSemester.id}`
         );
         setSchedules(response.data);
       } catch (error) {
@@ -252,6 +258,18 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
   const handleSemesterChange = (semesterId: string) => {
     const semester = semesters.find((s) => s.id === Number(semesterId));
     setSelectedSemester(semester || null);
+  };
+
+  const handleDeleteSchedule = async (scheduleId: number) => {
+    if (!confirm('Tem certeza que deseja excluir este agendamento?')) return;
+
+    try {
+      await api.delete(`/api/v1/schedules/${scheduleId}`);
+      setSchedules((prev) => prev.filter((s) => s.id !== scheduleId));
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      alert('Erro ao excluir horário');
+    }
   };
 
   const filteredGroups = groups.filter((group) => {
@@ -309,6 +327,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           dayOfWeek,
           startTime,
           endTime,
+          semesterId: selectedSemester.id,
           groupId,
         };
         isNew = true;
@@ -393,7 +412,16 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar */}
         <div className="lg:col-span-1 bg-white rounded-xl shadow-md p-6 h-fit">
-          <h2 className="text-xl font-bold mb-6 text-gray-800">Meus Cursos</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-gray-800">Meus Cursos</h2>
+            <Button
+              variant="link"
+              className="text-indigo-600 hover:text-indigo-700"
+            >
+              <Plus strokeWidth={2} />
+              Adicionar Turma
+            </Button>
+          </div>
 
           <div className="mb-6 space-y-4">
             <Select
@@ -426,19 +454,40 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           </div>
 
           <div className="space-y-3 mb-4">
-            {filteredGroups.map((group) => (
-              <GroupCard
-                key={group.id}
-                group={group}
-                draggable={[
-                  UserTypeEnum.ADMIN,
-                  UserTypeEnum.COORDINATOR,
-                ].includes(userType)}
-              />
-            ))}
+            {groupsPagination.isLoading ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="animate-spin text-gray-500" />
+              </div>
+            ) : filteredGroups.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                {searchTerm ? (
+                  'Nenhuma turma encontrada'
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <img
+                      className="w-30 h-30"
+                      src="thinking.png"
+                      alt="thinking emote"
+                    />
+                    <p className="mt-8">Nenhuma turma cadastrada neste curso</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              filteredGroups.map((group) => (
+                <GroupCard
+                  key={group.id}
+                  group={group}
+                  draggable={[
+                    UserTypeEnum.ADMIN,
+                    UserTypeEnum.COORDINATOR,
+                  ].includes(userType)}
+                />
+              ))
+            )}
           </div>
 
-          {groupsPagination.hasMore && (
+          {groupsPagination.hasMore && groups.length > 0 && (
             <Button
               onClick={groupsPagination.loadMore}
               disabled={groupsPagination.isLoading}
@@ -454,6 +503,17 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
                 'Carregar mais'
               )}
             </Button>
+          )}
+          {groups.length > 0 && (
+            <>
+              <hr />
+              <div className="flex justify-center items-center mt-4 gap-2">
+                <Info className="w-4 h-4 font-semibold text-muted-foreground" />
+                <p className="text-sm font-semibold text-muted-foreground">
+                  Arraste a Turma para a grade
+                </p>
+              </div>
+            </>
           )}
         </div>
 
@@ -474,15 +534,45 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
                   <SelectContent className="max-h-80 overflow-y-auto">
                     {semesters.length > 0 ? (
                       <>
-                        {semesters.map((semester) => (
-                          <SelectItem
-                            key={semester.id}
-                            value={semester.id.toString()}
-                          >
-                            {semester.name}
-                          </SelectItem>
-                        ))}
+                        {/* Semestres Ativos */}
+                        <SelectGroup>
+                          <SelectLabel className="text-xs font-semibold text-gray-500 px-2 py-1">
+                            Semestres Ativos
+                          </SelectLabel>
+                          {semesters
+                            .filter((semester) => semester.status === 'ACTIVE')
+                            .map((semester) => (
+                              <SelectItem
+                                key={semester.id}
+                                value={semester.id.toString()}
+                                className="pl-4"
+                              >
+                                {semester.name}
+                              </SelectItem>
+                            ))}
+                        </SelectGroup>
 
+                        {/* Semestres Concluídos */}
+                        <SelectGroup>
+                          <SelectLabel className="text-xs font-semibold text-gray-500 px-2 py-1">
+                            Semestres Concluídos
+                          </SelectLabel>
+                          {semesters
+                            .filter(
+                              (semester) => semester.status === 'FINALIZED'
+                            )
+                            .map((semester) => (
+                              <SelectItem
+                                key={semester.id}
+                                value={semester.id.toString()}
+                                className="pl-4 opacity-75"
+                              >
+                                {semester.name}
+                              </SelectItem>
+                            ))}
+                        </SelectGroup>
+
+                        {/* Botão Carregar Mais */}
                         <div>
                           {semestersPagination.hasMore && (
                             <Button
@@ -515,6 +605,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
                   </SelectContent>
                 </Select>
                 <Button className="bg-indigo-600 hover:bg-indigo-700">
+                  <Download strokeWidth={2} />
                   Exportar
                 </Button>
               </div>
@@ -687,11 +778,25 @@ function ScheduleItem({
             },
           }
         : {})}
-      className={`bg-${schedule.group?.color}-100 border-l-4 border-${
+      className={`bg-${
+        schedule.group?.color
+      }-100 hover:shadow-sm hover:-translate-y-0.5 transition-all border-l-4 border-${
         schedule.group?.color
       }-500 p-2 rounded mb-2 ${draggable ? 'cursor-move' : ''}`}
     >
-      <h4 className="font-medium text-sm">{schedule.group?.abbreviation}</h4>
+      <div className="flex justify-between items-start gap-2">
+        <h4 className="font-medium text-sm flex-1 min-w-0 break-words">
+          {schedule.group?.abbreviation}
+        </h4>
+        <Button
+          variant={'ghost'}
+          size="icon"
+          className="w-4 h-4 text-gray-400 hover:text-gray-600 hover:bg-red-400"
+        >
+          <X className="shrink-0" strokeWidth={2} />
+        </Button>
+      </div>
+
       <p className="text-xs text-gray-600">{schedule.group?.name}</p>
       <div className="flex justify-between">
         <p className="text-xs text-gray-500 ">
