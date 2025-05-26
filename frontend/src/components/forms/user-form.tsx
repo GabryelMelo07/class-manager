@@ -21,7 +21,6 @@ import { InfoTooltip } from '../info-tooltip';
 
 export default function UserForm({ onSubmit, onCancel }: DefaultFormProps) {
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const formSchema = z.object({
     'text-input-0': z.string().min(1, { message: 'Este campo é obrigatório' }),
@@ -172,7 +171,6 @@ export default function UserForm({ onSubmit, onCancel }: DefaultFormProps) {
                         size="icon"
                         className="absolute right-1 top-1 h-8 w-8 text-gray-400 hover:text-gray-600"
                         onClick={() => setShowPassword(!showPassword)}
-                        disabled={loading}
                       >
                         {showPassword ? (
                           <EyeOffIcon className="size-4" />
@@ -326,7 +324,7 @@ export default function UserForm({ onSubmit, onCancel }: DefaultFormProps) {
           />
         </div>
 
-        <div className="flex justify-end space-x-2 pt-4">
+        <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>

@@ -18,6 +18,7 @@ import { useState } from 'react';
 import { DynamicModal } from './dynamic-modal';
 import UserForm from '@/components/forms/user-form';
 import CourseForm from '@/components/forms/course-form';
+import SemesterForm from './forms/semester-form';
 
 interface HeaderProps {
   userType: UserTypeEnum;
@@ -36,6 +37,12 @@ export function Header({ userType }: HeaderProps) {
   const handleCourseSubmit = (data: any) => {
     console.log('Dados do curso:', data);
     // Aqui você faria a requisição para salvar o curso
+    setOpenModal(null);
+  };
+
+  const handleSemesterSubmit = (data: any) => {
+    console.log('Dados do semestre:', data);
+    // Aqui você faria a requisição para salvar o semestre
     setOpenModal(null);
   };
 
@@ -59,7 +66,6 @@ export function Header({ userType }: HeaderProps) {
             <div className="flex items-center space-x-4">
               <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
                 <DropdownMenuTrigger asChild>
-                  {/* TODO: Remover o background ao fazer hover e adicionar underline */}
                   <Button
                     variant="ghost"
                     className="text-md font-semibold hover:bg-transparent hover:text-stone-300"
@@ -78,6 +84,12 @@ export function Header({ userType }: HeaderProps) {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleOpenModal('course')}>
                     Curso
+                  </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => handleOpenModal('timeSlots')}>
+                    Horários de aula
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleOpenModal('semester')}>
+                    Semestre
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -109,6 +121,20 @@ export function Header({ userType }: HeaderProps) {
                 />
               </DynamicModal>
 
+              <DynamicModal
+                trigger={<div style={{ display: 'none' }} />}
+                title="Cadastrar Semestre"
+                description="Preencha os dados para cadastrar um novo semestre"
+                open={openModal === 'semester'}
+                onOpenChange={(open) => setOpenModal(open ? 'semester' : null)}
+              >
+                <SemesterForm
+                  onSubmit={handleSemesterSubmit}
+                  onCancel={() => setOpenModal(null)}
+                />
+              </DynamicModal>
+              
+              {/* Logout Button */}
               {userType !== UserTypeEnum.PUBLIC && (
                 <Button
                   variant="ghost"
@@ -123,6 +149,7 @@ export function Header({ userType }: HeaderProps) {
                 </Button>
               )}
 
+              {/* Dark Mode Toggle Button */}
               <Button
                 variant="ghost"
                 className="font-semibold bg-transparent hover:bg-transparent hover:text-stone-200"

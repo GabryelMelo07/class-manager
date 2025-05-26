@@ -140,7 +140,7 @@ export default function CourseForm({ onSubmit, onCancel }: DefaultFormProps) {
           />
         </div>
 
-        <div className="flex justify-end space-x-2 pt-4">
+        <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>

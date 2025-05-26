@@ -3,8 +3,14 @@
 import { useEffect, useState } from 'react';
 import {
   DndContext,
+  DragOverlay,
+  DragStartEvent,
+  MouseSensor,
+  TouchSensor,
   useDraggable,
   useDroppable,
+  useSensor,
+  useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
 import api from '@/lib/api';
@@ -63,6 +69,11 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [daysMap, setDaysMap] = useState<Record<string, string>>({});
   const [generatedTimeSlots, setGeneratedTimeSlots] = useState<string[]>([]);
+
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeItem, setActiveItem] = useState<Group | ScheduleItem | null>(
+    null
+  );
 
   // Pagination hooks
   const groupsPagination = usePagination();
@@ -282,6 +293,22 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
   });
 
   // DnD handling
+  // Adicione estas funções de handler:
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
+
+    // Identifica se é um grupo ou schedule sendo arrastado
+    if (event.active.data.current?.type === 'group') {
+      const groupId = event.active.data.current.groupId;
+      const group = groups.find((g) => g.id === groupId);
+      setActiveItem(group || null);
+    } else if (event.active.data.current?.type === 'schedule') {
+      const scheduleId = event.active.data.current.scheduleId;
+      const schedule = schedules.find((s) => s.id === scheduleId);
+      setActiveItem(schedule || null);
+    }
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const MIN_DRAG_DISTANCE = 5;
 
@@ -378,6 +405,9 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
         if (isNew) return [...prev, response.data];
         return prev.map((s) => (s.id === response.data.id ? response.data : s));
       });
+
+      setActiveId(null);
+      setActiveItem(null);
     } catch (error) {
       console.error('Error creating or updating schedule:', error);
       alert('Erro ao salvar horário.');
@@ -407,8 +437,27 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     return slots;
   };
 
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 3, // Reduz a distância mínima para ativar o drag
+    },
+  });
+
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 100, // Reduz o delay para touch
+      tolerance: 5,
+    },
+  });
+
+  const sensors = useSensors(mouseSensor, touchSensor);
+
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      sensors={sensors}
+    >
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar */}
         <div className="lg:col-span-1 bg-white rounded-xl shadow-md p-6 h-fit">
@@ -619,9 +668,42 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
             )}
             daysMap={daysMap}
             generatedTimeSlots={generatedTimeSlots}
+            onDeleteSchedule={handleDeleteSchedule}
           />
         </div>
       </div>
+
+      <DragOverlay>
+        {activeItem && activeId ? (
+          activeId.startsWith('group-') ? (
+            <GroupCard group={activeItem as Group} draggable={false} />
+          ) : (
+            <div
+              className={`bg-${
+                (activeItem as ScheduleItem).group?.color || 'blue'
+              }-100 border-l-4 border-${
+                (activeItem as ScheduleItem).group?.color || 'blue'
+              }-500 p-2 rounded shadow-lg`}
+            >
+              <h4 className="font-medium text-sm">
+                {(activeItem as ScheduleItem).group?.abbreviation}
+              </h4>
+              <p className="text-xs text-gray-600">
+                {(activeItem as ScheduleItem).group?.name}
+              </p>
+              <p className="text-xs text-gray-500">
+                {(activeItem as ScheduleItem).group?.classRoom?.abbreviation}
+              </p>
+              <p className="mt-2 text-xs text-gray-500">
+                {
+                  (activeItem as ScheduleItem).group?.discipline?.teacher
+                    ?.fullName
+                }
+              </p>
+            </div>
+          )
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }
@@ -632,11 +714,13 @@ function ScheduleTable({
   droppable,
   daysMap,
   generatedTimeSlots,
+  onDeleteSchedule,
 }: {
   schedules: ScheduleItem[];
   droppable: boolean;
   daysMap: Record<string, string>;
   generatedTimeSlots: string[];
+  onDeleteSchedule: (id: number) => void;
 }) {
   const sortedDays = Object.entries(daysMap).sort(([a], [b]) => {
     return DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b);
@@ -653,7 +737,7 @@ function ScheduleTable({
             {sortedDays.map(([apiDay, ptDay]) => (
               <th
                 key={apiDay}
-                className="py-3 text-center font-medium text-gray-500 w-[200px]"
+                className="py-3 text-center font-medium text-gray-500 min-w-[200px]"
               >
                 {ptDay}
               </th>
@@ -685,6 +769,7 @@ function ScheduleTable({
                         key={schedule.id}
                         schedule={schedule}
                         draggable={droppable}
+                        onDeleteSchedule={onDeleteSchedule}
                       />
                     ))}
                   </TableCell>
@@ -726,9 +811,11 @@ function TableCell({
 function ScheduleItem({
   schedule,
   draggable,
+  onDeleteSchedule,
 }: {
   schedule: ScheduleItem;
   draggable: boolean;
+  onDeleteSchedule: (id: number) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: schedule.id,
@@ -737,63 +824,86 @@ function ScheduleItem({
       scheduleId: schedule.id,
       groupId: schedule.group.id,
     },
+    disabled: !draggable,
   });
 
-  const style = transform
+  const style: React.CSSProperties | undefined = transform
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        pointerEvents: 'none' as const,
+        opacity: 0,
       }
     : undefined;
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDeleteSchedule(schedule.id);
+  };
+
+  // Criar listeners customizados que excluem o botão de delete
+  const customListeners = draggable
+    ? {
+        ...listeners,
+        onPointerDown: (e: React.PointerEvent) => {
+          // Se o clique foi no botão ou dentro dele, não iniciar drag
+          if ((e.target as HTMLElement).closest('button[data-delete-button]')) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+          // Caso contrário, usar o listener original
+          if (listeners?.onPointerDown) {
+            listeners.onPointerDown(e);
+          }
+        },
+      }
+    : {};
 
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
-      // Prevenir comportamento de atualizar ao somente clicar no objeto
-      {...(draggable
-        ? {
-            ...listeners,
-            onMouseDown: (e) => {
-              // Permite apenas arrastar a partir do elemento
-              const element = e.currentTarget;
-              const handleDragStart = (e: MouseEvent) => {
-                const dx = e.clientX - element.getBoundingClientRect().left;
-                const dy = e.clientY - element.getBoundingClientRect().top;
-
-                if (
-                  dx < 0 ||
-                  dx > element.offsetWidth ||
-                  dy < 0 ||
-                  dy > element.offsetHeight
-                ) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }
-              };
-
-              element.addEventListener('dragstart', handleDragStart);
-              return () =>
-                element.removeEventListener('dragstart', handleDragStart);
-            },
-          }
-        : {})}
-      className={`bg-${
-        schedule.group?.color
-      }-100 hover:shadow-sm hover:-translate-y-0.5 transition-all border-l-4 border-${
-        schedule.group?.color
-      }-500 p-2 rounded mb-2 ${draggable ? 'cursor-move' : ''}`}
+      {...customListeners}
+      className={`relative group bg-${
+        schedule.group?.color || 'blue'
+      }-100 hover:shadow-sm transition-all border-l-4 border-${
+        schedule.group?.color || 'blue'
+      }-500 p-2 rounded mb-2 ${draggable ? 'cursor-move' : ''} ${
+        transform ? 'shadow-lg scale-105' : 'hover:-translate-y-0.5'
+      }`}
     >
-      <h4 className="font-medium text-sm flex-1 break-words">
-        {schedule.group?.abbreviation}
-      </h4>
-      <p className="text-xs text-gray-600 break-words">{schedule.group?.name}</p>
-      <p className="text-xs text-gray-500 break-words">
-        {schedule.group?.classRoom?.abbreviation}
-      </p>
-      <p className="mt-2 text-xs text-gray-500 break-words">
-        {schedule.group?.discipline?.teacher?.fullName}
-      </p>
+      {draggable && (
+        <button
+          type="button"
+          data-delete-button="true"
+          onClick={handleDeleteClick}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-red-100 transition-colors z-10 opacity-0 group-hover:opacity-100"
+          title="Excluir horário"
+        >
+          <X className="h-3 w-3 text-red-500" />
+        </button>
+      )}
+
+      <div className="pr-6">
+        <h4 className="font-medium text-sm flex-1 break-words">
+          {schedule.group?.abbreviation}
+        </h4>
+        <p className="text-xs text-gray-600 break-words">
+          {schedule.group?.name}
+        </p>
+        <p className="text-xs text-gray-500 break-words">
+          {schedule.group?.classRoom?.abbreviation}
+        </p>
+        <p className="mt-2 text-xs text-gray-500 break-words">
+          {schedule.group?.discipline?.teacher?.fullName}
+        </p>
+      </div>
     </div>
   );
 }
