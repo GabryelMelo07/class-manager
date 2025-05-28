@@ -6,6 +6,8 @@ import com.class_manager.backend.service.GroupService;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -32,6 +34,11 @@ public class GroupController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+	@GetMapping("/semesters-of-course")
+	public ResponseEntity<List<Integer>> findAllSemestersOfCourse() {
+		return ResponseEntity.ok(groupService.findAllSemestersOfCourse());
+	}
 
     @PostMapping
 	@PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_COORDINATOR')")

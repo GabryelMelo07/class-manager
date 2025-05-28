@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -34,6 +35,10 @@ public class GroupService {
 
 	public Optional<Group> findById(Long id) {
 		return groupRepository.findById(id);
+	}
+
+	public List<Integer> findAllSemestersOfCourse() {
+		return groupRepository.findAllDistinctSemestersOrdered();
 	}
 
 	public Group save(GroupDto dto) {
