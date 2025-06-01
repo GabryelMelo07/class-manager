@@ -55,13 +55,6 @@ export default function UserForm({ onSubmit, onCancel }: DefaultFormProps) {
     form.clearErrors();
   }
 
-  // TODO: Adicionar a lógica de enviar o request para a API com os dados do formulário
-  // const handleSubmit = (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   const formData = new FormData(e.target as HTMLFormElement);
-  //   // onSubmit(Object.fromEntries(formData.entries()));
-  // };
-
   return (
     <Form {...form}>
       <form

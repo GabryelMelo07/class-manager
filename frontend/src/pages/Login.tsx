@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/form';
 import { useState } from 'react';
 import { LoginBenefits } from '@/components/login-benefits';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   'email-input-0': z.string().min(1, { message: 'This field is required' }),
@@ -64,8 +65,7 @@ export function Login() {
       setAuthenticated(true);
       navigate('/');
     } catch (err) {
-      // TODO: TROCAR POR UM ALERT
-      alert('Credenciais inválidas.');
+      toast.error('Credenciais inválidas.');
     } finally {
       setLoading(false);
     }
@@ -121,9 +121,6 @@ export function Login() {
                             type="email"
                             id="email-input-0"
                             className="pl-10"
-                            // value={
-                            //   'admin@riogrande.ifrs.edu.br'
-                            // } /* VALOR PADRÃO PARA FACILITAR O TESTE. TODO: REMOVER AO TERMINAR OS TESTES */
                           />
                         </div>
                       </FormControl>
@@ -148,9 +145,6 @@ export function Login() {
                             placeholder="Insira sua senha"
                             className="pl-10 pr-10"
                             id="password-input-0"
-                            // value={
-                            //   'admin'
-                            // } /* VALOR PADRÃO PARA FACILITAR O TESTE. TODO: REMOVER AO TERMINAR OS TESTES */
                           />
                           <Button
                             type="button"
@@ -197,31 +191,6 @@ export function Login() {
           <LoginBenefits />
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-white py-6 border-t">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-600 text-sm">
-              © 2023 Organizador Acadêmico. Todos os direitos reservados.
-            </p>
-            <div className="flex space-x-4 mt-4 md:mt-0">
-              <a
-                href="#"
-                className="text-gray-600 hover:text-indigo-600 text-sm"
-              >
-                Termos de Uso
-              </a>
-              <a
-                href="#"
-                className="text-gray-600 hover:text-indigo-600 text-sm"
-              >
-                Política de Privacidade
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

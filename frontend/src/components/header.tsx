@@ -1,24 +1,31 @@
-import { Button } from '@/components/ui/button';
-import { clearTokens } from '@/lib/auth';
-import { UserTypeEnum } from '@/utils/UserTypeEnum';
 import {
   CalendarIcon,
   ChevronDown,
   ChevronUp,
   LogOut,
   Moon,
+  Sun,
 } from 'lucide-react';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
 import { useState } from 'react';
-import { DynamicModal } from './dynamic-modal';
+import api from '@/lib/api';
+import { toast } from 'sonner';
+import { UserTypeEnum } from '@/utils/UserTypeEnum';
+import { Button } from '@/components/ui/button';
+import { DynamicModal } from '@/components/dynamic-modal';
 import UserForm from '@/components/forms/user-form';
 import CourseForm from '@/components/forms/course-form';
-import SemesterForm from './forms/semester-form';
+import SemesterForm from '@/components/forms/semester-form';
+import TimeSlotForm from './forms/timeslot-form';
+import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface HeaderProps {
   userType: UserTypeEnum;
@@ -27,23 +34,107 @@ interface HeaderProps {
 export function Header({ userType }: HeaderProps) {
   const [openModal, setOpenModal] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
 
-  const handleUserSubmit = (data: any) => {
-    console.log('Dados do usuário:', data);
-    // Aqui você faria a requisição para salvar o usuário
-    setOpenModal(null);
+  const handleUserSubmit = async (data: any) => {
+    try {
+      const payload = {
+        email: data['email-input-0'],
+        password: data['password-input-0'],
+        name: data['text-input-0'],
+        surname: data['text-input-1'],
+        roles: data['checkbox-group-0'],
+      };
+
+      const response = await api.post('/api/v1/auth/register', payload);
+
+      if (response.status !== 201) {
+        throw new Error('Erro ao criar usuário');
+      }
+
+      setOpenModal(null);
+      toast.success('Usuário criado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao criar usuário:', error);
+      toast.error('Erro ao criar usuário');
+    }
   };
 
-  const handleCourseSubmit = (data: any) => {
-    console.log('Dados do curso:', data);
-    // Aqui você faria a requisição para salvar o curso
-    setOpenModal(null);
+  const handleCourseSubmit = async (data: any) => {
+    try {
+      const payload = {
+        name: data['text-input-0'],
+        abbreviation: data['text-input-1'],
+        coordinatorId: data['select-0'],
+      };
+
+      const response = await api.post('/api/v1/courses', payload);
+
+      if (response.status !== 201) {
+        throw new Error('Erro ao criar curso');
+      }
+
+      setOpenModal(null);
+      toast.success('Curso criado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao criar curso:', error);
+      toast.error('Erro ao criar curso');
+    }
   };
 
-  const handleSemesterSubmit = (data: any) => {
-    console.log('Dados do semestre:', data);
-    // Aqui você faria a requisição para salvar o semestre
-    setOpenModal(null);
+  const handleSemesterSubmit = async (data: any) => {
+    try {
+      const payload = {
+        startDate: new Date(data['date-0']).toISOString(),
+      };
+
+      const response = await api.post('/api/v1/semesters', payload);
+
+      if (response.status !== 201) {
+        throw new Error('Erro ao criar semestre');
+      }
+
+      setOpenModal(null);
+      toast.success('Semestre criado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao criar semestre:', error);
+      toast.error('Erro ao criar semestre');
+    }
+  };
+
+  const handleTimeSlotSubmit = async (data: any) => {
+    try {
+      const payload = {
+        daysOfWeek: data.daysOfWeek,
+        startTime: `${data.startTime.hours
+          .toString()
+          .padStart(2, '0')}:${data.startTime.minutes
+          .toString()
+          .padStart(2, '0')}`,
+        endTime: `${data.endTime.hours
+          .toString()
+          .padStart(2, '0')}:${data.endTime.minutes
+          .toString()
+          .padStart(2, '0')}`,
+        lessonDurationMinutes: data.lessonDurationMinutes,
+        courseId: data.courseId,
+      };
+
+      const response = await api.post('/api/v1/time-slots', payload);
+
+      if (response.status !== 200) {
+        throw new Error('Erro ao criar ou atualizar horário de aula');
+      }
+
+      setOpenModal(null);
+      toast.success(
+        'Horário de aula do curso criado ou atualizado com sucesso!'
+      );
+    } catch (error) {
+      console.error('Erro ao criar ou atualizar horário de aula:', error);
+      toast.error('Erro ao criar ou atualizar horário de aula');
+    }
   };
 
   const handleOpenModal = (modalType: string) => {
@@ -68,7 +159,7 @@ export function Header({ userType }: HeaderProps) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="text-md font-semibold hover:bg-transparent hover:text-stone-300"
+                    className="text-md font-semibold hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
                   >
                     Cadastros{' '}
                     {dropdownOpen ? (
@@ -78,14 +169,16 @@ export function Header({ userType }: HeaderProps) {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-white">
+                <DropdownMenuContent>
                   <DropdownMenuItem onClick={() => handleOpenModal('user')}>
                     Usuário
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleOpenModal('course')}>
                     Curso
                   </DropdownMenuItem>
-                   <DropdownMenuItem onClick={() => handleOpenModal('timeSlots')}>
+                  <DropdownMenuItem
+                    onClick={() => handleOpenModal('timeSlots')}
+                  >
                     Horários de aula
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleOpenModal('semester')}>
@@ -118,6 +211,20 @@ export function Header({ userType }: HeaderProps) {
                 <CourseForm
                   onSubmit={handleCourseSubmit}
                   onCancel={() => setOpenModal(null)}
+                  isOpen={openModal === 'course'}
+                />
+              </DynamicModal>
+
+              <DynamicModal
+                trigger={<div style={{ display: 'none' }} />}
+                title="Cadastrar Horários de Aula"
+                description="Preencha os dados para os horários de aula do curso"
+                open={openModal === 'timeSlots'}
+                onOpenChange={(open) => setOpenModal(open ? 'timeSlots' : null)}
+              >
+                <TimeSlotForm
+                  onSubmit={handleTimeSlotSubmit}
+                  onCancel={() => setOpenModal(null)}
                 />
               </DynamicModal>
 
@@ -133,28 +240,31 @@ export function Header({ userType }: HeaderProps) {
                   onCancel={() => setOpenModal(null)}
                 />
               </DynamicModal>
-              
+
               {/* Logout Button */}
               {userType !== UserTypeEnum.PUBLIC && (
                 <Button
                   variant="ghost"
-                  className="font-semibold text-md hover:bg-transparent hover:text-stone-300"
-                  onClick={() => {
-                    clearTokens();
-                    window.location.reload();
-                  }}
+                  className="font-semibold text-md hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
+                  onClick={logout}
                 >
                   Sair
                   <LogOut className="ml-2" strokeWidth={2} />
                 </Button>
               )}
 
-              {/* Dark Mode Toggle Button */}
+              {/* Theme Toggle Button */}
               <Button
                 variant="ghost"
-                className="font-semibold bg-transparent hover:bg-transparent hover:text-stone-200"
+                className="font-semibold bg-transparent hover:text-stone-200 hover:bg-transparent dark:hover:bg-transparent"
+                onClick={toggleTheme}
+                aria-label="Alternar tema"
               >
-                <Moon strokeWidth={2} />
+                {theme === 'dark' ? (
+                  <Sun strokeWidth={2} />
+                ) : (
+                  <Moon strokeWidth={2} />
+                )}
               </Button>
             </div>
           </div>

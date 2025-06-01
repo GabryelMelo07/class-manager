@@ -7,7 +7,7 @@ export function AdminView() {
   const userType = UserTypeEnum.ADMIN;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Header userType={UserTypeEnum.ADMIN} />
       <main className="container mx-auto px-4 py-8">
         {/* Container principal usando grid */}

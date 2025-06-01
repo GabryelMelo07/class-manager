@@ -1,10 +1,3 @@
-export interface AuthContextProps {
-  isAuthenticated: boolean
-  setAuthenticated: (value: boolean) => void
-  userRoles: string[],
-  isLoading: boolean
-}
-
 export interface JwtPayload {
   scope: string
   exp: number
@@ -70,6 +63,7 @@ export interface ScheduleItem {
     name: string;
     abbreviation: string;
     color: string;
+    semesterOfCourse: number;
     discipline: {
       id: number;
       name: string;

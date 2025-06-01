@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -13,10 +12,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import api from '@/lib/api';
-import { UserTypeEnum } from '@/utils/UserTypeEnum';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+
 import {
   Select,
   SelectContent,
@@ -26,9 +22,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { GroupCard } from './group-card';
+
+import { useEffect, useState } from 'react';
+import api from '@/lib/api';
 import type { ScheduleItem, Course, Group, Semester } from '@/lib/types';
+import { toast } from 'sonner';
 import { Download, Info, Loader2, Plus, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { GroupCard } from '@/components/group-card';
+import GroupForm from '@/components/forms/group-form';
+import { DynamicModal } from '@/components/dynamic-modal';
+import { CustomCheckboxGroup } from '@/components/custom-checkbox-group';
+import { UserTypeEnum } from '@/utils/UserTypeEnum';
 import { formatTimeSlot } from '@/utils/Helpers';
 
 const DAY_ORDER = [
@@ -60,10 +66,13 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
   // State management
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [courseSemesters, setCourseSemesters] = useState<number[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [selectedSemester, setSelectedSemester] = useState<Semester | null>(
     null
   );
+  const [selectedCustomCheckboxSemesters, setSelectedCustomCheckboxSemesters] =
+    useState<number[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
@@ -74,6 +83,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
   const [activeItem, setActiveItem] = useState<Group | ScheduleItem | null>(
     null
   );
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 
   // Pagination hooks
   const groupsPagination = usePagination();
@@ -259,6 +269,25 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     fetchSchedules();
   }, [selectedCourse, selectedSemester]);
 
+  // Fetch semesters of the selected course
+  useEffect(() => {
+    const fetchCourseSemesters = async () => {
+      if (!selectedCourse) return;
+
+      try {
+        const response = await api.get(
+          `/api/v1/groups/semesters-of-course/${selectedCourse.id}`
+        );
+
+        setCourseSemesters(response.data);
+      } catch (error) {
+        console.error('Error fetching course semesters:', error);
+      }
+    };
+
+    fetchCourseSemesters();
+  }, [selectedCourse]);
+
   // Handlers
   const handleCourseChange = (courseId: string) => {
     const course = courses.find((c) => c.id === Number(courseId));
@@ -279,7 +308,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
       setSchedules((prev) => prev.filter((s) => s.id !== scheduleId));
     } catch (error) {
       console.error('Error deleting schedule:', error);
-      alert('Erro ao excluir horário');
+      toast.error('Erro ao excluir horário');
     }
   };
 
@@ -291,6 +320,45 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
       group.discipline.teacher.name.toLowerCase().includes(searchLower)
     );
   });
+
+  const getFilteredSchedules = () => {
+    if (selectedCustomCheckboxSemesters.length === 0) {
+      return schedules;
+    }
+
+    return schedules.filter((schedule) =>
+      selectedCustomCheckboxSemesters.includes(schedule.group?.semesterOfCourse)
+    );
+  };
+
+  const handleGroupSubmit = async (data: any) => {
+    try {
+      if (!selectedCourse) {
+        toast.error('Selecione um curso antes de criar uma turma');
+        return;
+      }
+
+      const payload = {
+        ...data,
+        courseId: selectedCourse.id,
+      };
+
+      const response = await api.post('/api/v1/groups', payload);
+
+      if (response.status !== 201) {
+        throw new Error('Erro ao criar turma');
+      }
+
+      setIsGroupModalOpen(false);
+
+      setGroups((prev) => [response.data, ...prev]);
+
+      toast.success('Turma criada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao criar turma:', error);
+      toast.error('Erro ao criar turma');
+    }
+  };
 
   // DnD handling
   // Adicione estas funções de handler:
@@ -410,7 +478,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
       setActiveItem(null);
     } catch (error) {
       console.error('Error creating or updating schedule:', error);
-      alert('Erro ao salvar horário.');
+      toast.error('Erro ao salvar horário.');
     }
   };
 
@@ -460,12 +528,13 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     >
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar */}
-        <div className="lg:col-span-1 bg-white rounded-xl shadow-md p-6 h-fit">
+        <div className="lg:col-span-1 bg-card dark:bg-secondary rounded-xl shadow-md p-6 h-fit">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-gray-800">Meus Cursos</h2>
+            <h2 className="text-xl font-bold">Meus Cursos</h2>
             <Button
               variant="link"
-              className="text-indigo-600 hover:text-indigo-700"
+              className="text-indigo-600 dark:text-neutral-300 hover:text-indigo-700 cursor-pointer"
+              onClick={() => setIsGroupModalOpen(true)}
             >
               <Plus strokeWidth={2} />
               Adicionar Turma
@@ -483,7 +552,11 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
               <SelectContent className="max-h-80 overflow-y-auto">
                 {courses.length > 0 ? (
                   courses.map((course) => (
-                    <SelectItem key={course.id} value={course.id.toString()}>
+                    <SelectItem
+                      key={course.id}
+                      value={course.id.toString()}
+                      className="hover:bg-accent hover:text-accent-foreground"
+                    >
                       {course.name}
                     </SelectItem>
                   ))
@@ -567,10 +640,10 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
         </div>
 
         {/* Schedule Grid */}
-        <div className="lg:col-span-3 bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="lg:col-span-3 bg-card dark:bg-secondary rounded-xl shadow-md overflow-hidden">
           <div className="p-6 border-b">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-800">Horário</h2>
+              <h2 className="text-xl font-bold">Horário</h2>
 
               <div className="flex space-x-3">
                 <Select
@@ -653,16 +726,26 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
                     )}
                   </SelectContent>
                 </Select>
-                <Button className="bg-indigo-600 hover:bg-indigo-700">
+                <Button className="bg-primary hover:bg-indigo-700">
                   <Download strokeWidth={2} />
                   Exportar
                 </Button>
               </div>
             </div>
+            <div className="overflow-x-auto">
+              <CustomCheckboxGroup
+                options={courseSemesters.map((s) => ({
+                  value: s,
+                  label: `${s}º Semestre`,
+                }))}
+                selectedValues={selectedCustomCheckboxSemesters}
+                onChange={setSelectedCustomCheckboxSemesters}
+              />
+            </div>
           </div>
 
           <ScheduleTable
-            schedules={schedules}
+            schedules={getFilteredSchedules()}
             droppable={[UserTypeEnum.ADMIN, UserTypeEnum.COORDINATOR].includes(
               userType
             )}
@@ -672,6 +755,20 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           />
         </div>
       </div>
+
+      <DynamicModal
+        trigger={<div style={{ display: 'none' }} />}
+        title="Cadastrar Turma"
+        description="Preencha os dados para cadastrar uma nova turma"
+        open={isGroupModalOpen}
+        onOpenChange={(open) => setIsGroupModalOpen(open)}
+      >
+        <GroupForm
+          onSubmit={handleGroupSubmit}
+          onCancel={() => setIsGroupModalOpen(false)}
+          courseId={selectedCourse?.id}
+        />
+      </DynamicModal>
 
       <DragOverlay>
         {activeItem && activeId ? (
@@ -731,13 +828,13 @@ function ScheduleTable({
       <table className="w-full table-fixed">
         <thead>
           <tr className="border-b">
-            <th className="w-24 py-3 text-center font-medium text-gray-500">
+            <th className="w-24 py-3 text-center font-medium text-gray-500 dark:text-gray-300">
               Dia
             </th>
             {sortedDays.map(([apiDay, ptDay]) => (
               <th
                 key={apiDay}
-                className="py-3 text-center font-medium text-gray-500 min-w-[200px]"
+                className="py-3 text-center font-medium text-gray-500 min-w-[200px] dark:text-gray-300"
               >
                 {ptDay}
               </th>
@@ -747,7 +844,7 @@ function ScheduleTable({
         <tbody>
           {generatedTimeSlots.map((timeSlot) => (
             <tr key={timeSlot} className="border-b">
-              <td className="py-8 text-center text-sm text-gray-500">
+              <td className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                 {timeSlot}
               </td>
 
@@ -891,7 +988,7 @@ function ScheduleItem({
       )}
 
       <div className="pr-6">
-        <h4 className="font-medium text-sm flex-1 break-words">
+        <h4 className="font-medium text-sm flex-1 break-words text-gray-900 dark:text-gray-900">
           {schedule.group?.abbreviation}
         </h4>
         <p className="text-xs text-gray-600 break-words">
