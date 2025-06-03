@@ -37,8 +37,8 @@ public class GroupService {
 		return groupRepository.findById(id);
 	}
 
-	public List<Integer> findAllSemestersOfCourse() {
-		return groupRepository.findAllDistinctSemestersOrdered();
+	public List<Integer> findAllSemestersOfCourse(Long courseId) {
+		return groupRepository.findAllDistinctSemestersOrdered(courseId);
 	}
 
 	public Group save(GroupDto dto) {

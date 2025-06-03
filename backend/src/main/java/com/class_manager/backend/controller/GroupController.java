@@ -35,9 +35,9 @@ public class GroupController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-	@GetMapping("/semesters-of-course")
-	public ResponseEntity<List<Integer>> findAllSemestersOfCourse() {
-		return ResponseEntity.ok(groupService.findAllSemestersOfCourse());
+	@GetMapping("/semesters-of-course/{courseId}")
+	public ResponseEntity<List<Integer>> findAllSemestersOfCourse(@PathVariable Long courseId) {
+		return ResponseEntity.ok(groupService.findAllSemestersOfCourse(courseId));
 	}
 
     @PostMapping

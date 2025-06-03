@@ -9,6 +9,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -114,6 +116,20 @@ public class UserService {
 		}
 
 		return users;
+	}
+
+	private Page<UserResponseDto> findUsers(RoleName roleName, Pageable pageable) {
+		return userRepository.findByRole(roleName, pageable)
+				.map(user -> new UserResponseDto(user.getId(), user.getEmail(), user.getName(), user.getSurname(),
+						user.getRoles()));
+	}
+
+	public Page<UserResponseDto> findAllTeachers(Pageable pageable) {
+		return findUsers(RoleName.TEACHER, pageable);
+	}
+
+	public Page<UserResponseDto> findAllCoordinators(Pageable pageable) {
+		return findUsers(RoleName.COORDINATOR, pageable);
 	}
 
 	public LoginResponseDto login(LoginRequestDto loginRequest) {

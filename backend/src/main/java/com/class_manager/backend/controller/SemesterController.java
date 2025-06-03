@@ -2,6 +2,7 @@ package com.class_manager.backend.controller;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -33,10 +34,10 @@ public class SemesterController {
 	@PostMapping
 	@PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_COORDINATOR')")
 	public ResponseEntity<Semester> save(@RequestBody SemesterDto dto) {
-		return ResponseEntity.ok(semesterService.save(dto));
-	}
+		return ResponseEntity.status(HttpStatus.CREATED).body(semesterService.save(dto));
+	}	
 
-	@DeleteMapping("/{id}")
+	@DeleteMapping("/{id}")	
 	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
 		semesterService.delete(id);

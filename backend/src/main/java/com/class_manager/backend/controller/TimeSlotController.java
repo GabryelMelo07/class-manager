@@ -29,7 +29,7 @@ public class TimeSlotController {
     }
 
     @GetMapping("/{courseId}")
-	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_COORDINATOR')")
     public ResponseEntity<TimeSlot> getTimeSlotByCourse(@PathVariable Long courseId) {
         return ResponseEntity.ok(timeSlotService.getByCourseId(courseId));
     }

@@ -22,7 +22,7 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
 	@Query("""
 			SELECT DISTINCT g.semesterOfCourse FROM Group g 
-				WHERE g.semesterOfCourse IS NOT NULL ORDER BY g.semesterOfCourse
+				WHERE g.semesterOfCourse IS NOT NULL AND g.discipline.course.id = :courseId ORDER BY g.semesterOfCourse
 			""")
-	List<Integer> findAllDistinctSemestersOrdered();
+	List<Integer> findAllDistinctSemestersOrdered(@Param("courseId") Long courseId);
 }
