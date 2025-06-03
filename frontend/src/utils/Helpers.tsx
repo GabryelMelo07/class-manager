@@ -1,5 +1,14 @@
 export const requiredFieldMessage = "Este campo é obrigatório";
 
+export const DAY_ORDER = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+];
+
 export const groupColors = [
   { name: "red", bgClass: "bg-red-100", borderClass: "border-red-500" },
   { name: "green", bgClass: "bg-green-100", borderClass: "border-green-500" },

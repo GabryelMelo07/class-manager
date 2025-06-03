@@ -53,7 +53,7 @@ export interface Group {
   color: string
 }
 
-export interface ScheduleItem {
+export interface IScheduleItem {
   id: number;
   dayOfWeek: string;
   startTime: string;

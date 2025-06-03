@@ -6,8 +6,6 @@ import {
   DragStartEvent,
   MouseSensor,
   TouchSensor,
-  useDraggable,
-  useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -25,9 +23,9 @@ import {
 
 import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
-import type { ScheduleItem, Course, Group, Semester } from '@/lib/types';
+import type { Course, Group, IScheduleItem, Semester } from '@/lib/types';
 import { toast } from 'sonner';
-import { AlertCircle, Download, Info, Loader2, Plus, X } from 'lucide-react';
+import { Download, Info, Loader2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GroupCard } from '@/components/group-card';
@@ -35,17 +33,9 @@ import GroupForm from '@/components/forms/group-form';
 import { DynamicModal } from '@/components/dynamic-modal';
 import { CustomCheckboxGroup } from '@/components/custom-checkbox-group';
 import { UserTypeEnum } from '@/utils/UserTypeEnum';
-import { formatTimeSlot, getColorClasses } from '@/utils/Helpers';
+import { DAY_ORDER, formatTimeSlot, getColorClasses } from '@/utils/Helpers';
 import { useReactToPrint } from 'react-to-print';
-
-const DAY_ORDER = [
-  'MONDAY',
-  'TUESDAY',
-  'WEDNESDAY',
-  'THURSDAY',
-  'FRIDAY',
-  'SATURDAY',
-];
+import ScheduleTable from './schedule-table';
 
 const usePagination = (initialPage = 0) => {
   const [page, setPage] = useState(initialPage);
@@ -76,12 +66,12 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     useState<number[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+  const [schedules, setSchedules] = useState<IScheduleItem[]>([]);
   const [daysMap, setDaysMap] = useState<Record<string, string>>({});
   const [generatedTimeSlots, setGeneratedTimeSlots] = useState<string[]>([]);
 
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeItem, setActiveItem] = useState<Group | ScheduleItem | null>(
+  const [activeItem, setActiveItem] = useState<Group | IScheduleItem | null>(
     null
   );
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
@@ -771,25 +761,25 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           ) : (
             <div
               className={`${
-                getColorClasses((activeItem as ScheduleItem).group?.color)
+                getColorClasses((activeItem as IScheduleItem).group?.color)
                   .bgClass
               } border-l-4 ${
-                getColorClasses((activeItem as ScheduleItem).group?.color)
+                getColorClasses((activeItem as IScheduleItem).group?.color)
                   .borderClass
               } p-2 rounded shadow-lg`}
             >
               <h4 className="font-medium text-sm">
-                {(activeItem as ScheduleItem).group?.abbreviation}
+                {(activeItem as IScheduleItem).group?.abbreviation}
               </h4>
               <p className="text-xs text-gray-600">
-                {(activeItem as ScheduleItem).group?.name}
+                {(activeItem as IScheduleItem).group?.name}
               </p>
               <p className="text-xs text-gray-500">
-                {(activeItem as ScheduleItem).group?.classRoom?.abbreviation}
+                {(activeItem as IScheduleItem).group?.classRoom?.abbreviation}
               </p>
               <p className="mt-2 text-xs text-gray-500">
                 {
-                  (activeItem as ScheduleItem).group?.discipline?.teacher
+                  (activeItem as IScheduleItem).group?.discipline?.teacher
                     ?.fullName
                 }
               </p>
@@ -798,245 +788,5 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
         ) : null}
       </DragOverlay>
     </DndContext>
-  );
-}
-
-// Schedule Table Component
-function ScheduleTable({
-  schedules,
-  droppable,
-  daysMap,
-  generatedTimeSlots,
-  onDeleteSchedule,
-  timeSlotsError,
-  scheduleTableRef,
-}: {
-  schedules: ScheduleItem[];
-  droppable: boolean;
-  daysMap: Record<string, string>;
-  generatedTimeSlots: string[];
-  onDeleteSchedule: (id: number) => void;
-  timeSlotsError: boolean;
-  scheduleTableRef: React.RefObject<HTMLDivElement | null>;
-}) {
-  const sortedDays = Object.entries(daysMap).sort(([a], [b]) => {
-    return DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b);
-  });
-
-  return (
-    <div
-      ref={scheduleTableRef}
-      className="overflow-x-visible print:p-4 print:bg-white"
-    >
-      <table className="w-full table-fixed print:w-full">
-        <thead>
-          {!timeSlotsError && (
-            <tr className="border-b">
-              <th className="w-24 py-3 text-center font-medium text-gray-500 dark:text-gray-300">
-                Dia
-              </th>
-              {sortedDays.map(([apiDay, ptDay]) => (
-                <th
-                  key={apiDay}
-                  className="py-3 text-center font-medium text-gray-500 min-w-[200px] dark:text-gray-300"
-                >
-                  {ptDay}
-                </th>
-              ))}
-            </tr>
-          )}
-        </thead>
-        <tbody>
-          {timeSlotsError ? (
-            <tr>
-              <td colSpan={sortedDays.length + 1} className="text-center py-12">
-                <div className="max-w-md mx-auto p-4 rounded-lg">
-                  <div className="flex flex-col items-center">
-                    <div className="rounded-full bg-indigo-100 p-4 mb-6">
-                      <AlertCircle className="h-12 w-12 text-indigo-500" />
-                    </div>
-                    <h3 className="font-semibold text-lg mb-1 text-secondary-foreground">
-                      Horários não cadastrados
-                    </h3>
-                    <p className="text-muted-foreground text-center">
-                      Este curso não possui horários cadastrados. Por favor,
-                      cadastre os horários disponíveis para este curso.
-                    </p>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          ) : generatedTimeSlots.length === 0 ? (
-            <tr>
-              <td colSpan={sortedDays.length + 1} className="text-center py-12">
-                <Loader2 className="animate-spin mx-auto text-gray-500" />
-              </td>
-            </tr>
-          ) : (
-            generatedTimeSlots.map((timeSlot) => (
-              <tr key={timeSlot} className="border-b">
-                <td className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                  {timeSlot}
-                </td>
-
-                {sortedDays.map(([apiDay, ptDay]) => {
-                  const cellSchedules = schedules.filter(
-                    (s) =>
-                      s.dayOfWeek === apiDay &&
-                      formatTimeSlot(s.startTime, s.endTime) === timeSlot
-                  );
-
-                  return (
-                    <TableCell
-                      key={`${ptDay}-${timeSlot}`}
-                      id={`${apiDay}|${timeSlot}`}
-                      droppable={droppable}
-                    >
-                      {cellSchedules.map((schedule) => (
-                        <ScheduleItem
-                          key={schedule.id}
-                          schedule={schedule}
-                          draggable={droppable}
-                          onDeleteSchedule={onDeleteSchedule}
-                        />
-                      ))}
-                    </TableCell>
-                  );
-                })}
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// Table Cell Component
-function TableCell({
-  id,
-  children,
-  droppable,
-}: {
-  id: string;
-  children: React.ReactNode;
-  droppable: boolean;
-}) {
-  const { isOver, setNodeRef } = useDroppable({ id, disabled: !droppable });
-
-  return (
-    <td
-      ref={setNodeRef}
-      className={`p-2 min-h-16 ${
-        isOver ? 'bg-indigo-50' : ''
-      } transition-colors`}
-    >
-      {children}
-    </td>
-  );
-}
-
-// Schedule Item Component
-function ScheduleItem({
-  schedule,
-  draggable,
-  onDeleteSchedule,
-}: {
-  schedule: ScheduleItem;
-  draggable: boolean;
-  onDeleteSchedule: (id: number) => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: schedule.id,
-    data: {
-      type: 'schedule',
-      scheduleId: schedule.id,
-      groupId: schedule.group.id,
-    },
-    disabled: !draggable,
-  });
-
-  const style: React.CSSProperties | undefined = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        pointerEvents: 'none' as const,
-        opacity: 0,
-      }
-    : undefined;
-
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onDeleteSchedule(schedule.id);
-  };
-
-  // Criar listeners customizados que excluem o botão de delete
-  const customListeners = draggable
-    ? {
-        ...listeners,
-        onPointerDown: (e: React.PointerEvent) => {
-          // Se o clique foi no botão ou dentro dele, não iniciar drag
-          if ((e.target as HTMLElement).closest('button[data-delete-button]')) {
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-          }
-          // Caso contrário, usar o listener original
-          if (listeners?.onPointerDown) {
-            listeners.onPointerDown(e);
-          }
-        },
-      }
-    : {};
-
-  const colorClasses = getColorClasses(schedule.group?.color);
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...customListeners}
-      className={`relative group print:group-hover:shadow-none ${
-        colorClasses.bgClass
-      } hover:shadow-sm transition-all border-l-4 ${
-        colorClasses.borderClass
-      } p-2 rounded mb-2 ${draggable ? 'cursor-move' : ''} ${
-        transform ? 'shadow-lg scale-105' : 'hover:-translate-y-0.5'
-      }`}
-    >
-      {draggable && (
-        <button
-          type="button"
-          data-delete-button="true"
-          onClick={handleDeleteClick}
-          onPointerDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          className="no-print absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-red-100 transition-colors z-10 opacity-0 group-hover:opacity-100"
-          title="Excluir horário"
-        >
-          <X className="h-3 w-3 text-red-500" />
-        </button>
-      )}
-
-      <div className="flex flex-col justify-between pr-2 h-28 overflow-hidden">
-        <div>
-          <h4 className="font-medium text-sm flex-1 break-words text-gray-900 dark:text-gray-900">
-            {schedule.group?.abbreviation}
-          </h4>
-          <p className="text-xs text-gray-600 break-words">
-            {schedule.group?.name}
-          </p>
-        </div>
-        <p className="text-xs text-gray-500 break-words">
-          {schedule.group?.classRoom?.abbreviation}
-        </p>
-        <p className="mt-2 text-xs text-gray-500 break-words">
-          {schedule.group?.discipline?.teacher?.fullName}
-        </p>
-      </div>
-    </div>
   );
 }
