@@ -72,7 +72,7 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="bg-indigo-600 text-white shadow-lg">
         <div className="container mx-auto px-4 py-6">
@@ -91,10 +91,10 @@ export function Login() {
         <div className="w-full md:w-1/2 p-8 flex items-center justify-center">
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-800">
+              <h2 className="text-3xl font-bold text-gray-800 dark:text-foreground">
                 Bem-vindo de volta!
               </h2>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 dark:text-foreground mt-2">
                 Acesse sua conta para gerenciar seus cursos e atividades
                 acadêmicas
               </p>

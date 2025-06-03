@@ -18,20 +18,21 @@ import { Button } from '../ui/button';
 import { useState } from 'react';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
 import { InfoTooltip } from '../info-tooltip';
+import { requiredFieldMessage } from '@/utils/Helpers';
 
 export default function UserForm({ onSubmit, onCancel }: DefaultFormProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   const formSchema = z.object({
-    'text-input-0': z.string().min(1, { message: 'Este campo é obrigatório' }),
-    'text-input-1': z.string().min(1, { message: 'Este campo é obrigatório' }),
+    'text-input-0': z.string().min(1, { message: requiredFieldMessage }),
+    'text-input-1': z.string().min(1, { message: requiredFieldMessage }),
     'email-input-0': z
       .string()
       .email({ message: 'Endereço de email inválido' })
-      .min(1, { message: 'Este campo é obrigatório' }),
+      .min(1, { message: requiredFieldMessage }),
     'password-input-0': z
       .string()
-      .min(1, { message: 'Este campo é obrigatório' }),
+      .min(1, { message: requiredFieldMessage }),
     'checkbox-group-0': z
       .array(z.string())
       .refine((value) => value.some((item) => item), {

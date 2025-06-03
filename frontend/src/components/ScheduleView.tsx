@@ -23,11 +23,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import type { ScheduleItem, Course, Group, Semester } from '@/lib/types';
 import { toast } from 'sonner';
-import { Download, Info, Loader2, Plus, X } from 'lucide-react';
+import { AlertCircle, Download, Info, Loader2, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GroupCard } from '@/components/group-card';
@@ -35,7 +35,8 @@ import GroupForm from '@/components/forms/group-form';
 import { DynamicModal } from '@/components/dynamic-modal';
 import { CustomCheckboxGroup } from '@/components/custom-checkbox-group';
 import { UserTypeEnum } from '@/utils/UserTypeEnum';
-import { formatTimeSlot } from '@/utils/Helpers';
+import { formatTimeSlot, getColorClasses } from '@/utils/Helpers';
+import { useReactToPrint } from 'react-to-print';
 
 const DAY_ORDER = [
   'MONDAY',
@@ -84,10 +85,14 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     null
   );
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [timeSlotsError, setTimeSlotsError] = useState(false);
 
   // Pagination hooks
   const groupsPagination = usePagination();
   const semestersPagination = usePagination();
+
+  // Referência para a tabela
+  const scheduleTableRef = useRef<HTMLDivElement>(null);
 
   // Fetch courses on mount
   useEffect(() => {
@@ -111,6 +116,8 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     const fetchTimeSlots = async () => {
       if (!selectedCourse) return;
 
+      setTimeSlotsError(false);
+
       try {
         const response = await api.get(
           `/api/v1/time-slots/${selectedCourse.id}`
@@ -121,6 +128,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
             return DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b);
           }
         );
+
         const orderedDays = daysOrder.reduce(
           (acc: Record<string, string>, day: string) => {
             acc[day] =
@@ -136,6 +144,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           },
           {}
         );
+
         setDaysMap(orderedDays);
 
         // Generate time slots
@@ -145,26 +154,14 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           response.data.lessonDurationMinutes
         );
         setGeneratedTimeSlots(slots);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching time slots:', error);
-        // Fallback to default values
-        setGeneratedTimeSlots([
-          '08:00-09:00',
-          '09:00-10:00',
-          '11:00-12:00',
-          '13:30-14:30',
-          '15:30-16:30',
-          '18:50-19:40',
-          '17:00-18:00',
-        ]);
-        setDaysMap({
-          MONDAY: 'Segunda',
-          TUESDAY: 'Terça',
-          WEDNESDAY: 'Quarta',
-          THURSDAY: 'Quinta',
-          FRIDAY: 'Sexta',
-          SATURDAY: 'Sábado',
-        });
+
+        if (error.response?.status === 404) {
+          setTimeSlotsError(true);
+          setGeneratedTimeSlots([]);
+          setDaysMap({});
+        }
       }
     };
 
@@ -351,7 +348,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
 
       setIsGroupModalOpen(false);
 
-      setGroups((prev) => [response.data, ...prev]);
+      setGroups((prev) => [...prev, response.data]);
 
       toast.success('Turma criada com sucesso!');
     } catch (error) {
@@ -359,6 +356,19 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
       toast.error('Erro ao criar turma');
     }
   };
+
+  const handlePrint = useReactToPrint({
+    contentRef: scheduleTableRef,
+    documentTitle: `Horário do curso ${selectedCourse?.name || ''} ${
+      selectedSemester?.name || ''
+    }`,
+    pageStyle: `
+      @media print {
+        body { -webkit-print-color-adjust: exact; }
+        .schedule-item { break-inside: avoid; }
+      }
+    `,
+  });
 
   // DnD handling
   // Adicione estas funções de handler:
@@ -406,18 +416,6 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
         const groupId = active.data.current.groupId;
         const [startTime, endTime] = timeSlot.split('-');
 
-        const hasConflict = schedules.some(
-          (s) =>
-            s.dayOfWeek === dayOfWeek &&
-            s.startTime === startTime &&
-            s.endTime === endTime
-        );
-
-        if (hasConflict) {
-          alert('Já existe uma turma neste horário!');
-          return;
-        }
-
         body = {
           dayOfWeek,
           startTime,
@@ -442,19 +440,6 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
         )}`;
 
         if (overId === originalPosition) return;
-
-        const hasConflict = schedules.some(
-          (s) =>
-            s.id !== scheduleId &&
-            s.dayOfWeek === dayOfWeek &&
-            s.startTime === newStartTime &&
-            s.endTime === newEndTime
-        );
-
-        if (hasConflict) {
-          alert('Já existe uma turma neste horário!');
-          return;
-        }
 
         body = {
           dayOfWeek,
@@ -528,7 +513,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     >
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar */}
-        <div className="lg:col-span-1 bg-card dark:bg-secondary rounded-xl shadow-md p-6 h-fit">
+        <div className="lg:col-span-1 bg-card dark:bg-secondary rounded-xl shadow-md p-6 max-h-[85vh] flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold">Meus Cursos</h2>
             <Button
@@ -575,38 +560,42 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
             />
           </div>
 
-          <div className="space-y-3 mb-4">
-            {groupsPagination.isLoading ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="animate-spin text-gray-500" />
-              </div>
-            ) : filteredGroups.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">
-                {searchTerm ? (
-                  'Nenhuma turma encontrada'
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <img
-                      className="w-30 h-30"
-                      src="thinking.png"
-                      alt="thinking emote"
-                    />
-                    <p className="mt-8">Nenhuma turma cadastrada neste curso</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              filteredGroups.map((group) => (
-                <GroupCard
-                  key={group.id}
-                  group={group}
-                  draggable={[
-                    UserTypeEnum.ADMIN,
-                    UserTypeEnum.COORDINATOR,
-                  ].includes(userType)}
-                />
-              ))
-            )}
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scroll-bar">
+            <div className="space-y-3 pr-2 pt-1">
+              {groupsPagination.isLoading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="animate-spin text-gray-500" />
+                </div>
+              ) : filteredGroups.length === 0 ? (
+                <div className="text-center py-4 text-gray-500">
+                  {searchTerm ? (
+                    'Nenhuma turma encontrada'
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <img
+                        className="w-30 h-30"
+                        src="thinking.png"
+                        alt="thinking emote"
+                      />
+                      <p className="mt-8 dark:text-foreground">
+                        Nenhuma turma cadastrada neste curso
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                filteredGroups.map((group) => (
+                  <GroupCard
+                    key={group.id}
+                    group={group}
+                    draggable={[
+                      UserTypeEnum.ADMIN,
+                      UserTypeEnum.COORDINATOR,
+                    ].includes(userType)}
+                  />
+                ))
+              )}
+            </div>
           </div>
 
           {groupsPagination.hasMore && groups.length > 0 && (
@@ -627,15 +616,15 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
             </Button>
           )}
           {groups.length > 0 && (
-            <>
+            <div className="mt-4 space-y-4">
               <hr />
-              <div className="flex justify-center items-center mt-4 gap-2">
+              <div className="flex justify-center items-center gap-2">
                 <Info className="w-4 h-4 font-semibold text-muted-foreground" />
                 <p className="text-sm font-semibold text-muted-foreground">
                   Arraste a Turma para a grade
                 </p>
               </div>
-            </>
+            </div>
           )}
         </div>
 
@@ -726,7 +715,10 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
                     )}
                   </SelectContent>
                 </Select>
-                <Button className="bg-primary hover:bg-indigo-700">
+                <Button
+                  onClick={handlePrint}
+                  className="bg-primary hover:bg-indigo-700"
+                >
                   <Download strokeWidth={2} />
                   Exportar
                 </Button>
@@ -745,6 +737,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           </div>
 
           <ScheduleTable
+            scheduleTableRef={scheduleTableRef}
             schedules={getFilteredSchedules()}
             droppable={[UserTypeEnum.ADMIN, UserTypeEnum.COORDINATOR].includes(
               userType
@@ -752,6 +745,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
             daysMap={daysMap}
             generatedTimeSlots={generatedTimeSlots}
             onDeleteSchedule={handleDeleteSchedule}
+            timeSlotsError={timeSlotsError}
           />
         </div>
       </div>
@@ -776,11 +770,13 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
             <GroupCard group={activeItem as Group} draggable={false} />
           ) : (
             <div
-              className={`bg-${
-                (activeItem as ScheduleItem).group?.color || 'blue'
-              }-100 border-l-4 border-${
-                (activeItem as ScheduleItem).group?.color || 'blue'
-              }-500 p-2 rounded shadow-lg`}
+              className={`${
+                getColorClasses((activeItem as ScheduleItem).group?.color)
+                  .bgClass
+              } border-l-4 ${
+                getColorClasses((activeItem as ScheduleItem).group?.color)
+                  .borderClass
+              } p-2 rounded shadow-lg`}
             >
               <h4 className="font-medium text-sm">
                 {(activeItem as ScheduleItem).group?.abbreviation}
@@ -812,68 +808,104 @@ function ScheduleTable({
   daysMap,
   generatedTimeSlots,
   onDeleteSchedule,
+  timeSlotsError,
+  scheduleTableRef,
 }: {
   schedules: ScheduleItem[];
   droppable: boolean;
   daysMap: Record<string, string>;
   generatedTimeSlots: string[];
   onDeleteSchedule: (id: number) => void;
+  timeSlotsError: boolean;
+  scheduleTableRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const sortedDays = Object.entries(daysMap).sort(([a], [b]) => {
     return DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b);
   });
 
   return (
-    <div className="overflow-x-visible">
-      <table className="w-full table-fixed">
+    <div
+      ref={scheduleTableRef}
+      className="overflow-x-visible print:p-4 print:bg-white"
+    >
+      <table className="w-full table-fixed print:w-full">
         <thead>
-          <tr className="border-b">
-            <th className="w-24 py-3 text-center font-medium text-gray-500 dark:text-gray-300">
-              Dia
-            </th>
-            {sortedDays.map(([apiDay, ptDay]) => (
-              <th
-                key={apiDay}
-                className="py-3 text-center font-medium text-gray-500 min-w-[200px] dark:text-gray-300"
-              >
-                {ptDay}
+          {!timeSlotsError && (
+            <tr className="border-b">
+              <th className="w-24 py-3 text-center font-medium text-gray-500 dark:text-gray-300">
+                Dia
               </th>
-            ))}
-          </tr>
+              {sortedDays.map(([apiDay, ptDay]) => (
+                <th
+                  key={apiDay}
+                  className="py-3 text-center font-medium text-gray-500 min-w-[200px] dark:text-gray-300"
+                >
+                  {ptDay}
+                </th>
+              ))}
+            </tr>
+          )}
         </thead>
         <tbody>
-          {generatedTimeSlots.map((timeSlot) => (
-            <tr key={timeSlot} className="border-b">
-              <td className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                {timeSlot}
+          {timeSlotsError ? (
+            <tr>
+              <td colSpan={sortedDays.length + 1} className="text-center py-12">
+                <div className="max-w-md mx-auto p-4 rounded-lg">
+                  <div className="flex flex-col items-center">
+                    <div className="rounded-full bg-indigo-100 p-4 mb-6">
+                      <AlertCircle className="h-12 w-12 text-indigo-500" />
+                    </div>
+                    <h3 className="font-semibold text-lg mb-1 text-secondary-foreground">
+                      Horários não cadastrados
+                    </h3>
+                    <p className="text-muted-foreground text-center">
+                      Este curso não possui horários cadastrados. Por favor,
+                      cadastre os horários disponíveis para este curso.
+                    </p>
+                  </div>
+                </div>
               </td>
-
-              {sortedDays.map(([apiDay, ptDay]) => {
-                const cellSchedules = schedules.filter(
-                  (s) =>
-                    s.dayOfWeek === apiDay &&
-                    formatTimeSlot(s.startTime, s.endTime) === timeSlot
-                );
-
-                return (
-                  <TableCell
-                    key={`${ptDay}-${timeSlot}`}
-                    id={`${apiDay}|${timeSlot}`}
-                    droppable={droppable}
-                  >
-                    {cellSchedules.map((schedule) => (
-                      <ScheduleItem
-                        key={schedule.id}
-                        schedule={schedule}
-                        draggable={droppable}
-                        onDeleteSchedule={onDeleteSchedule}
-                      />
-                    ))}
-                  </TableCell>
-                );
-              })}
             </tr>
-          ))}
+          ) : generatedTimeSlots.length === 0 ? (
+            <tr>
+              <td colSpan={sortedDays.length + 1} className="text-center py-12">
+                <Loader2 className="animate-spin mx-auto text-gray-500" />
+              </td>
+            </tr>
+          ) : (
+            generatedTimeSlots.map((timeSlot) => (
+              <tr key={timeSlot} className="border-b">
+                <td className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                  {timeSlot}
+                </td>
+
+                {sortedDays.map(([apiDay, ptDay]) => {
+                  const cellSchedules = schedules.filter(
+                    (s) =>
+                      s.dayOfWeek === apiDay &&
+                      formatTimeSlot(s.startTime, s.endTime) === timeSlot
+                  );
+
+                  return (
+                    <TableCell
+                      key={`${ptDay}-${timeSlot}`}
+                      id={`${apiDay}|${timeSlot}`}
+                      droppable={droppable}
+                    >
+                      {cellSchedules.map((schedule) => (
+                        <ScheduleItem
+                          key={schedule.id}
+                          schedule={schedule}
+                          draggable={droppable}
+                          onDeleteSchedule={onDeleteSchedule}
+                        />
+                      ))}
+                    </TableCell>
+                  );
+                })}
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
@@ -957,17 +989,19 @@ function ScheduleItem({
       }
     : {};
 
+  const colorClasses = getColorClasses(schedule.group?.color);
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...customListeners}
-      className={`relative group bg-${
-        schedule.group?.color || 'blue'
-      }-100 hover:shadow-sm transition-all border-l-4 border-${
-        schedule.group?.color || 'blue'
-      }-500 p-2 rounded mb-2 ${draggable ? 'cursor-move' : ''} ${
+      className={`relative group print:group-hover:shadow-none ${
+        colorClasses.bgClass
+      } hover:shadow-sm transition-all border-l-4 ${
+        colorClasses.borderClass
+      } p-2 rounded mb-2 ${draggable ? 'cursor-move' : ''} ${
         transform ? 'shadow-lg scale-105' : 'hover:-translate-y-0.5'
       }`}
     >
@@ -980,20 +1014,22 @@ function ScheduleItem({
             e.preventDefault();
             e.stopPropagation();
           }}
-          className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-red-100 transition-colors z-10 opacity-0 group-hover:opacity-100"
+          className="no-print absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-red-100 transition-colors z-10 opacity-0 group-hover:opacity-100"
           title="Excluir horário"
         >
           <X className="h-3 w-3 text-red-500" />
         </button>
       )}
 
-      <div className="pr-6">
-        <h4 className="font-medium text-sm flex-1 break-words text-gray-900 dark:text-gray-900">
-          {schedule.group?.abbreviation}
-        </h4>
-        <p className="text-xs text-gray-600 break-words">
-          {schedule.group?.name}
-        </p>
+      <div className="flex flex-col justify-between pr-2 h-28 overflow-hidden">
+        <div>
+          <h4 className="font-medium text-sm flex-1 break-words text-gray-900 dark:text-gray-900">
+            {schedule.group?.abbreviation}
+          </h4>
+          <p className="text-xs text-gray-600 break-words">
+            {schedule.group?.name}
+          </p>
+        </div>
         <p className="text-xs text-gray-500 break-words">
           {schedule.group?.classRoom?.abbreviation}
         </p>

@@ -26,6 +26,8 @@ import { Input } from '@/components/ui/input';
 import { DefaultFormProps } from '@/lib/types';
 import { SelectGroup } from '@radix-ui/react-select';
 import { Button } from '@/components/ui/button';
+import ColorSelector from '@/components/color-selector';
+import { requiredFieldMessage } from '@/utils/Helpers';
 
 interface GroupFormProps extends DefaultFormProps {
   courseId?: number;
@@ -87,17 +89,17 @@ export default function GroupForm({
   }, []);
 
   const formSchema = z.object({
-    name: z.string().min(1, { message: 'Este campo é obrigatório' }),
-    abbreviation: z.string().min(1, { message: 'Este campo é obrigatório' }),
-    color: z.string().min(1, { message: 'Este campo é obrigatório' }),
+    name: z.string().min(1, { message: requiredFieldMessage }),
+    abbreviation: z.string().min(1, { message: requiredFieldMessage }),
+    color: z.string().min(1, { message: requiredFieldMessage }),
     semesterOfCourse: z.coerce
       .number({
         invalid_type_error: 'Este campo deve ser um número',
       })
-      .min(1, { message: 'Este campo é obrigatório' })
+      .min(1, { message: requiredFieldMessage })
       .min(1, { message: 'Este campo deve ser pelo menos 1' }),
-    disciplineId: z.string().min(1, { message: 'Este campo é obrigatório' }),
-    classRoomId: z.string().min(1, { message: 'Este campo é obrigatório' }),
+    disciplineId: z.string().min(1, { message: requiredFieldMessage }),
+    classRoomId: z.string().min(1, { message: requiredFieldMessage }),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -181,19 +183,16 @@ export default function GroupForm({
             control={form.control}
             name="color"
             render={({ field }) => (
-              <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
+              <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start my-2">
                 <FormLabel className="flex shrink-0">Cor</FormLabel>
 
                 <div className="w-full">
                   <FormControl>
                     <div className="relative w-full">
-                      <Input
-                        key="text-input-2"
-                        placeholder="Insira o nome da cor"
-                        type="text"
-                        id="color"
-                        className=" "
-                        {...field}
+                      <ColorSelector
+                        value={field.value}
+                        onChange={field.onChange}
+                        label=""
                       />
                     </div>
                   </FormControl>
@@ -240,8 +239,8 @@ export default function GroupForm({
                     <Select
                       {...field}
                       key="disciplineId"
-                      onValueChange={field.onChange}
                       value={field.value?.toString()}
+                      onValueChange={field.onChange}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecione a disciplina da turma" />
@@ -277,8 +276,8 @@ export default function GroupForm({
                     <Select
                       {...field}
                       key="classRoomId"
-                      onValueChange={field.onChange}
                       value={field.value?.toString()}
+                      onValueChange={field.onChange}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecione a sala a ser usada" />

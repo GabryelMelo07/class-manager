@@ -150,11 +150,44 @@
   --shadow-2xl: var(--shadow-2xl);
 }
 
+.custom-scroll-bar::-webkit-scrollbar-track {
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border-radius: 10px;
+	background-color: #F5F5F5;
+}
+
+.custom-scroll-bar::-webkit-scrollbar {
+	width: 8px;
+  border-radius: 10px;
+	background-color: #F5F5F5;
+}
+
+.custom-scroll-bar::-webkit-scrollbar-thumb {
+	border-radius: 10px;
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+	background-color: #868686;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground transition-colors duration-200;
+  }
+}
+
+@media print {
+  @page { 
+    size: landscape;
+    margin: 1cm;
+  }
+  
+  body { 
+    zoom: 80%; 
+  }
+  
+  .no-print { 
+    display: none !important; 
   }
 }

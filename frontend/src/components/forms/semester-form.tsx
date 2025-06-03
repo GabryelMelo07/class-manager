@@ -25,11 +25,12 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { DefaultFormProps } from '@/lib/types';
+import { requiredFieldMessage } from '@/utils/Helpers';
 
 export default function SemesterForm({ onSubmit, onCancel }: DefaultFormProps) {
   const formSchema = z.object({
     'date-0': z.date({
-      required_error: 'Este campo é obrigatório.',
+      required_error: requiredFieldMessage,
     }),
   });
 

@@ -5,8 +5,8 @@ import { Login } from '@/pages/Login';
 import { Home } from '@/pages/Home';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/context/ThemeContext';
+import NotFound from '@/pages/NotFound';
 
-// TODO: Criar uma página de Not Found e direcionar todos requests para rotas que não existem para esta página.
 export function App() {
   return (
     <Router>
@@ -35,6 +35,7 @@ export function App() {
                 </PrivateRoute>
               }
             />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </ThemeProvider>
       </AuthProvider>

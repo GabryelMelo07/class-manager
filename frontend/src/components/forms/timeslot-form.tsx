@@ -28,6 +28,7 @@ import { TimePicker } from '@/components/time-picker';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { SelectGroup } from '@radix-ui/react-select';
+import { requiredFieldMessage } from '@/utils/Helpers';
 
 export default function TimeSlotForm({ onSubmit, onCancel }: DefaultFormProps) {
   const [courses, setCourses] = useState<{ id: number; name: string }[]>([]);
@@ -49,7 +50,7 @@ export default function TimeSlotForm({ onSubmit, onCancel }: DefaultFormProps) {
     daysOfWeek: z
       .array(z.string())
       .refine((value) => value.some((item) => item), {
-        message: 'Selecione pelo menos um dia',
+        message: requiredFieldMessage,
       }),
     startTime: z.object({
       hours: z.number().min(0).max(23),
@@ -63,13 +64,13 @@ export default function TimeSlotForm({ onSubmit, onCancel }: DefaultFormProps) {
       .number({
         invalid_type_error: 'Deve ser um número',
       })
-      .min(1, { message: 'Obrigatório' })
+      .min(1, { message: requiredFieldMessage })
       .min(1, { message: 'Mínimo de 1 minuto' }),
     courseId: z.coerce
       .number({
-        invalid_type_error: 'Selecione um curso',
+        invalid_type_error: 'Deve ser um número',
       })
-      .min(1, { message: 'Selecione um curso' }),
+      .min(1, { message: requiredFieldMessage }),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -443,8 +444,8 @@ export default function TimeSlotForm({ onSubmit, onCancel }: DefaultFormProps) {
                     <Select
                       {...field}
                       key="courseId"
-                      onValueChange={field.onChange}
                       value={field.value?.toString()}
+                      onValueChange={field.onChange}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecione um curso" />

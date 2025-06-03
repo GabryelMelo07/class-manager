@@ -17,15 +17,18 @@ import {
 import { useState } from 'react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
+
 import { UserTypeEnum } from '@/utils/UserTypeEnum';
 import { Button } from '@/components/ui/button';
 import { DynamicModal } from '@/components/dynamic-modal';
 import UserForm from '@/components/forms/user-form';
 import CourseForm from '@/components/forms/course-form';
 import SemesterForm from '@/components/forms/semester-form';
-import TimeSlotForm from './forms/timeslot-form';
-import { useTheme } from '@/context/ThemeContext';
-import { useAuth } from '@/context/AuthContext';
+import TimeSlotForm from '@/components/forms/timeslot-form';
+import ClassRoomForm from '@/components/forms/class-room-form';
+import DisciplineForm from '@/components/forms/discipline-form';
 
 interface HeaderProps {
   userType: UserTypeEnum;
@@ -64,9 +67,9 @@ export function Header({ userType }: HeaderProps) {
   const handleCourseSubmit = async (data: any) => {
     try {
       const payload = {
-        name: data['text-input-0'],
-        abbreviation: data['text-input-1'],
-        coordinatorId: data['select-0'],
+        name: data.name,
+        abbreviation: data.abbreviation,
+        coordinatorId: data.coordinator,
       };
 
       const response = await api.post('/api/v1/courses', payload);
@@ -137,6 +140,55 @@ export function Header({ userType }: HeaderProps) {
     }
   };
 
+  const handleClassRoomSubmit = async (data: any) => {
+    try {
+      const payload = {
+        name: data.name,
+        abbreviation: data.abbreviation,
+        location: data.location
+      };
+
+      const response = await api.post('/api/v1/class-rooms', payload);
+
+      if (response.status !== 201) {
+        throw new Error('Erro ao criar sala de aula');
+      }
+
+      setOpenModal(null);
+      toast.success(
+        'Sala de aula criada com sucesso!'
+      );
+    } catch (error) {
+      console.error('Erro ao criar sala de aula:', error);
+      toast.error('Erro ao criar sala de aula');
+    }
+  };
+
+  const handleDisciplineSubmit = async (data: any) => {
+    try {
+      const payload = {
+        name: data.name,
+        abbreviation: data.abbreviation,
+        courseId: data.courseId,
+        teacherId: data.teacherId
+      };
+
+      const response = await api.post('/api/v1/disciplines', payload);
+
+      if (response.status !== 201) {
+        throw new Error('Erro ao criar disciplina');
+      }
+
+      setOpenModal(null);
+      toast.success(
+        'Disciplina criada com sucesso!'
+      );
+    } catch (error) {
+      console.error('Erro ao criar disciplina:', error);
+      toast.error('Erro ao criar disciplina');
+    }
+  };
+
   const handleOpenModal = (modalType: string) => {
     setDropdownOpen(false); // Fecha o dropdown
     setTimeout(() => {
@@ -161,7 +213,7 @@ export function Header({ userType }: HeaderProps) {
                     variant="ghost"
                     className="text-md font-semibold hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
                   >
-                    Cadastros{' '}
+                    Cadastrar{' '}
                     {dropdownOpen ? (
                       <ChevronUp className="font-semibold" strokeWidth={2} />
                     ) : (
@@ -179,10 +231,16 @@ export function Header({ userType }: HeaderProps) {
                   <DropdownMenuItem
                     onClick={() => handleOpenModal('timeSlots')}
                   >
-                    Horários de aula
+                    Horário de aula
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleOpenModal('semester')}>
                     Semestre
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleOpenModal('classRoom')}>
+                    Sala de Aula
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleOpenModal('discipline')}>
+                    Disciplina
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -238,6 +296,33 @@ export function Header({ userType }: HeaderProps) {
                 <SemesterForm
                   onSubmit={handleSemesterSubmit}
                   onCancel={() => setOpenModal(null)}
+                />
+              </DynamicModal>
+
+              <DynamicModal
+                trigger={<div style={{ display: 'none' }} />}
+                title="Cadastrar Sala de Aula"
+                description="Preencha os dados para cadastrar uma nova sala de aula"
+                open={openModal === 'classRoom'}
+                onOpenChange={(open) => setOpenModal(open ? 'classRoom' : null)}
+              >
+                <ClassRoomForm
+                  onSubmit={handleClassRoomSubmit}
+                  onCancel={() => setOpenModal(null)}
+                />
+              </DynamicModal>
+
+              <DynamicModal
+                trigger={<div style={{ display: 'none' }} />}
+                title="Cadastrar Disciplina"
+                description="Preencha os dados para cadastrar uma nova disciplina"
+                open={openModal === 'discipline'}
+                onOpenChange={(open) => setOpenModal(open ? 'discipline' : null)}
+              >
+                <DisciplineForm
+                  onSubmit={handleDisciplineSubmit}
+                  onCancel={() => setOpenModal(null)}
+                  isOpen={openModal === 'discipline'}
                 />
               </DynamicModal>
 
