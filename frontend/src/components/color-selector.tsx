@@ -50,7 +50,7 @@ export default function ColorSelector({
             onClick={() => handleColorSelect(color.name)}
             aria-label={`Cor ${color.name}`}
           >
-            <div className={`w-full h-full rounded-full ${color.bgClass.replace('100', '500')}`}>
+            <div className={`w-full h-full rounded-full ${color.darkerBgClass}`}>
               {selectedColor === color.name && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Check className="w-4 h-4 text-gray-800 drop-shadow" />

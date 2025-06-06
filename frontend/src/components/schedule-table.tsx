@@ -1,8 +1,8 @@
-import { DAY_ORDER, formatTimeSlot } from "@/utils/Helpers";
-import { AlertCircle, Loader } from "lucide-react";
-import { TableCell } from "@/components/table-cell";
-import { IScheduleItem } from "@/lib/types";
-import ScheduleItem from "@/components/schedule-item";
+import { DAY_ORDER, formatTimeSlot } from '@/utils/Helpers';
+import { AlertCircle, Loader } from 'lucide-react';
+import { TableCell } from '@/components/table-cell';
+import { IScheduleItem } from '@/lib/types';
+import ScheduleItem from '@/components/schedule-item';
 
 export default function ScheduleTable({
   schedules,
@@ -17,13 +17,19 @@ export default function ScheduleTable({
   droppable: boolean;
   daysMap: Record<string, string>;
   generatedTimeSlots: string[];
-  onDeleteSchedule: (id: number) => void;
+  onDeleteSchedule?: (id: number) => void;
   timeSlotsError: boolean;
   scheduleTableRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const sortedDays = Object.entries(daysMap).sort(([a], [b]) => {
     return DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b);
   });
+
+  const handleDeleteClick = (id: number) => {
+    if (onDeleteSchedule) {
+      onDeleteSchedule(id);
+    }
+  };
 
   return (
     <div
@@ -99,7 +105,7 @@ export default function ScheduleTable({
                           key={schedule.id}
                           schedule={schedule}
                           draggable={droppable}
-                          onDeleteSchedule={onDeleteSchedule}
+                          onDeleteSchedule={handleDeleteClick}
                         />
                       ))}
                     </TableCell>

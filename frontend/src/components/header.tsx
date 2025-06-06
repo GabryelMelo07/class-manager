@@ -39,6 +39,7 @@ export function Header({ userType }: HeaderProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { logout } = useAuth();
+  const isAdmin = userType === UserTypeEnum.ADMIN;
 
   const handleUserSubmit = async (data: any) => {
     try {
@@ -145,7 +146,7 @@ export function Header({ userType }: HeaderProps) {
       const payload = {
         name: data.name,
         abbreviation: data.abbreviation,
-        location: data.location
+        location: data.location,
       };
 
       const response = await api.post('/api/v1/class-rooms', payload);
@@ -155,9 +156,7 @@ export function Header({ userType }: HeaderProps) {
       }
 
       setOpenModal(null);
-      toast.success(
-        'Sala de aula criada com sucesso!'
-      );
+      toast.success('Sala de aula criada com sucesso!');
     } catch (error) {
       console.error('Erro ao criar sala de aula:', error);
       toast.error('Erro ao criar sala de aula');
@@ -170,7 +169,7 @@ export function Header({ userType }: HeaderProps) {
         name: data.name,
         abbreviation: data.abbreviation,
         courseId: data.courseId,
-        teacherId: data.teacherId
+        teacherId: data.teacherId,
       };
 
       const response = await api.post('/api/v1/disciplines', payload);
@@ -180,9 +179,7 @@ export function Header({ userType }: HeaderProps) {
       }
 
       setOpenModal(null);
-      toast.success(
-        'Disciplina criada com sucesso!'
-      );
+      toast.success('Disciplina criada com sucesso!');
     } catch (error) {
       console.error('Erro ao criar disciplina:', error);
       toast.error('Erro ao criar disciplina');
@@ -207,124 +204,156 @@ export function Header({ userType }: HeaderProps) {
             </div>
 
             <div className="flex items-center space-x-4">
-              <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="text-md font-semibold hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
+              {/* Cadastros */}
+              {isAdmin && (
+                <div>
+                  <DropdownMenu
+                    open={dropdownOpen}
+                    onOpenChange={setDropdownOpen}
                   >
-                    Cadastrar{' '}
-                    {dropdownOpen ? (
-                      <ChevronUp className="font-semibold" strokeWidth={2} />
-                    ) : (
-                      <ChevronDown className="font-semibold" strokeWidth={2} />
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => handleOpenModal('user')}>
-                    Usuário
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleOpenModal('course')}>
-                    Curso
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleOpenModal('timeSlots')}
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="text-md font-semibold hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
+                      >
+                        Cadastrar{' '}
+                        {dropdownOpen ? (
+                          <ChevronUp
+                            className="font-semibold"
+                            strokeWidth={2}
+                          />
+                        ) : (
+                          <ChevronDown
+                            className="font-semibold"
+                            strokeWidth={2}
+                          />
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleOpenModal('user')}>
+                        Usuário
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenModal('course')}
+                      >
+                        Curso
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenModal('timeSlots')}
+                      >
+                        Horário de aula
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenModal('semester')}
+                      >
+                        Semestre
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenModal('classRoom')}
+                      >
+                        Sala de Aula
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenModal('discipline')}
+                      >
+                        Disciplina
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Modals */}
+                  <DynamicModal
+                    trigger={<div style={{ display: 'none' }} />}
+                    title="Cadastrar Usuário"
+                    description="Preencha os dados para cadastrar um novo usuário"
+                    open={openModal === 'user'}
+                    onOpenChange={(open) => setOpenModal(open ? 'user' : null)}
                   >
-                    Horário de aula
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleOpenModal('semester')}>
-                    Semestre
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleOpenModal('classRoom')}>
-                    Sala de Aula
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleOpenModal('discipline')}>
-                    Disciplina
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <UserForm
+                      onSubmit={handleUserSubmit}
+                      onCancel={() => setOpenModal(null)}
+                    />
+                  </DynamicModal>
 
-              {/* Modals */}
-              <DynamicModal
-                trigger={<div style={{ display: 'none' }} />}
-                title="Cadastrar Usuário"
-                description="Preencha os dados para cadastrar um novo usuário"
-                open={openModal === 'user'}
-                onOpenChange={(open) => setOpenModal(open ? 'user' : null)}
-              >
-                <UserForm
-                  onSubmit={handleUserSubmit}
-                  onCancel={() => setOpenModal(null)}
-                />
-              </DynamicModal>
+                  <DynamicModal
+                    trigger={<div style={{ display: 'none' }} />}
+                    title="Cadastrar Curso"
+                    description="Preencha os dados para cadastrar um novo curso"
+                    open={openModal === 'course'}
+                    onOpenChange={(open) =>
+                      setOpenModal(open ? 'course' : null)
+                    }
+                  >
+                    <CourseForm
+                      onSubmit={handleCourseSubmit}
+                      onCancel={() => setOpenModal(null)}
+                      isOpen={openModal === 'course'}
+                    />
+                  </DynamicModal>
 
-              <DynamicModal
-                trigger={<div style={{ display: 'none' }} />}
-                title="Cadastrar Curso"
-                description="Preencha os dados para cadastrar um novo curso"
-                open={openModal === 'course'}
-                onOpenChange={(open) => setOpenModal(open ? 'course' : null)}
-              >
-                <CourseForm
-                  onSubmit={handleCourseSubmit}
-                  onCancel={() => setOpenModal(null)}
-                  isOpen={openModal === 'course'}
-                />
-              </DynamicModal>
+                  <DynamicModal
+                    trigger={<div style={{ display: 'none' }} />}
+                    title="Cadastrar Horários de Aula"
+                    description="Preencha os dados para os horários de aula do curso"
+                    open={openModal === 'timeSlots'}
+                    onOpenChange={(open) =>
+                      setOpenModal(open ? 'timeSlots' : null)
+                    }
+                  >
+                    <TimeSlotForm
+                      onSubmit={handleTimeSlotSubmit}
+                      onCancel={() => setOpenModal(null)}
+                    />
+                  </DynamicModal>
 
-              <DynamicModal
-                trigger={<div style={{ display: 'none' }} />}
-                title="Cadastrar Horários de Aula"
-                description="Preencha os dados para os horários de aula do curso"
-                open={openModal === 'timeSlots'}
-                onOpenChange={(open) => setOpenModal(open ? 'timeSlots' : null)}
-              >
-                <TimeSlotForm
-                  onSubmit={handleTimeSlotSubmit}
-                  onCancel={() => setOpenModal(null)}
-                />
-              </DynamicModal>
+                  <DynamicModal
+                    trigger={<div style={{ display: 'none' }} />}
+                    title="Cadastrar Semestre"
+                    description="Preencha os dados para cadastrar um novo semestre"
+                    open={openModal === 'semester'}
+                    onOpenChange={(open) =>
+                      setOpenModal(open ? 'semester' : null)
+                    }
+                  >
+                    <SemesterForm
+                      onSubmit={handleSemesterSubmit}
+                      onCancel={() => setOpenModal(null)}
+                    />
+                  </DynamicModal>
 
-              <DynamicModal
-                trigger={<div style={{ display: 'none' }} />}
-                title="Cadastrar Semestre"
-                description="Preencha os dados para cadastrar um novo semestre"
-                open={openModal === 'semester'}
-                onOpenChange={(open) => setOpenModal(open ? 'semester' : null)}
-              >
-                <SemesterForm
-                  onSubmit={handleSemesterSubmit}
-                  onCancel={() => setOpenModal(null)}
-                />
-              </DynamicModal>
+                  <DynamicModal
+                    trigger={<div style={{ display: 'none' }} />}
+                    title="Cadastrar Sala de Aula"
+                    description="Preencha os dados para cadastrar uma nova sala de aula"
+                    open={openModal === 'classRoom'}
+                    onOpenChange={(open) =>
+                      setOpenModal(open ? 'classRoom' : null)
+                    }
+                  >
+                    <ClassRoomForm
+                      onSubmit={handleClassRoomSubmit}
+                      onCancel={() => setOpenModal(null)}
+                    />
+                  </DynamicModal>
 
-              <DynamicModal
-                trigger={<div style={{ display: 'none' }} />}
-                title="Cadastrar Sala de Aula"
-                description="Preencha os dados para cadastrar uma nova sala de aula"
-                open={openModal === 'classRoom'}
-                onOpenChange={(open) => setOpenModal(open ? 'classRoom' : null)}
-              >
-                <ClassRoomForm
-                  onSubmit={handleClassRoomSubmit}
-                  onCancel={() => setOpenModal(null)}
-                />
-              </DynamicModal>
-
-              <DynamicModal
-                trigger={<div style={{ display: 'none' }} />}
-                title="Cadastrar Disciplina"
-                description="Preencha os dados para cadastrar uma nova disciplina"
-                open={openModal === 'discipline'}
-                onOpenChange={(open) => setOpenModal(open ? 'discipline' : null)}
-              >
-                <DisciplineForm
-                  onSubmit={handleDisciplineSubmit}
-                  onCancel={() => setOpenModal(null)}
-                  isOpen={openModal === 'discipline'}
-                />
-              </DynamicModal>
+                  <DynamicModal
+                    trigger={<div style={{ display: 'none' }} />}
+                    title="Cadastrar Disciplina"
+                    description="Preencha os dados para cadastrar uma nova disciplina"
+                    open={openModal === 'discipline'}
+                    onOpenChange={(open) =>
+                      setOpenModal(open ? 'discipline' : null)
+                    }
+                  >
+                    <DisciplineForm
+                      onSubmit={handleDisciplineSubmit}
+                      onCancel={() => setOpenModal(null)}
+                      isOpen={openModal === 'discipline'}
+                    />
+                  </DynamicModal>
+                </div>
+              )}
 
               {/* Logout Button */}
               {userType !== UserTypeEnum.PUBLIC && (

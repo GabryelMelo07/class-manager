@@ -45,8 +45,6 @@ const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
 };
 
 export function CustomCheckboxGroup({ options, selectedValues, onChange  }: CustomCheckboxGroupProps) {
-  // const [groupSelected, setGroupSelected] = useState<string[]>(["todos"]);
-
   const handleCheckboxChange = (value: string, checked: boolean) => {
     const numericValue = parseInt(value);
     
@@ -69,7 +67,7 @@ export function CustomCheckboxGroup({ options, selectedValues, onChange  }: Cust
 
   return (
     <div className="flex flex-col gap-1 w-full">
-      <h2 className="text-sm font-medium">Semestres</h2>
+      <h2 className="text-sm font-medium">Filtrar horários pelo semestre das turmas</h2>
       <div className="flex flex-wrap gap-2">
         <CustomCheckbox
           value="todos"
