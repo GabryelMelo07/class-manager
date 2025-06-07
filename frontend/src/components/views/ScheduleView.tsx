@@ -739,7 +739,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
                     onClick={groupsPagination.loadMore}
                     disabled={groupsPagination.isLoading}
                     variant="outline"
-                    className="w-full"
+                    className="w-full mt-2"
                   >
                     {groupsPagination.isLoading ? (
                       <>
