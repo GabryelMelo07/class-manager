@@ -7,7 +7,8 @@ import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.class_manager.backend.dto.model.time_slot.UpdateTimeSlotDto;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "time_slot")
@@ -36,6 +37,13 @@ public class TimeSlot {
 
     @OneToOne
     @JoinColumn(name = "course_id", nullable = false, unique = true)
-	@JsonIgnore
+	@JsonIgnoreProperties({"id", "coordinator", "disciplines", "timeSlot"})
     private Course course;
+
+	public TimeSlot(UpdateTimeSlotDto timeSlotDto) {
+		this.daysOfWeek = timeSlotDto.daysOfWeek();
+		this.startTime = timeSlotDto.startTime();
+		this.endTime = timeSlotDto.endTime();
+		this.lessonDurationMinutes = timeSlotDto.lessonDurationMinutes();
+	}
 }

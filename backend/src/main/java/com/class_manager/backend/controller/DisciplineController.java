@@ -24,16 +24,14 @@ public class DisciplineController {
 	private final DisciplineService disciplineService;
 
 	@GetMapping
-	public ResponseEntity<Page<Discipline>> findAll(@RequestParam Long courseId, Pageable pageable) {
+	public ResponseEntity<Page<Discipline>> findAllByCourse(@RequestParam Long courseId, Pageable pageable) {
 		return ResponseEntity.ok(disciplineService.findAll(courseId, pageable));
 	}
 
-	// TODO: POSSÍVELMENTE NÃO SERÁ USADO, ANALISAR E REMOVER
-	@GetMapping("/{id}")
-	public ResponseEntity<Discipline> findById(@PathVariable Long id) {
-		return disciplineService.findById(id)
-				.map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+	@GetMapping("/all")
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+	public ResponseEntity<Page<Discipline>> findAll(Pageable pageable) {
+		return ResponseEntity.ok(disciplineService.findAll(pageable));
 	}
 
 	@PostMapping

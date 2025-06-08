@@ -45,6 +45,7 @@ public class Course {
 	private List<Discipline> disciplines;
 
 	@OneToOne(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonIgnoreProperties({"course"})
 	private TimeSlot timeSlot;
 
 	public Course(CourseDto dto) {

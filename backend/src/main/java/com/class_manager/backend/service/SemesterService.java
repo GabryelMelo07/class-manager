@@ -12,6 +12,7 @@ import com.class_manager.backend.enums.SemesterStatus;
 import com.class_manager.backend.exceptions.InvalidScheduleException;
 import com.class_manager.backend.model.Semester;
 import com.class_manager.backend.repository.SemesterRepository;
+import com.class_manager.backend.utils.Patcher;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -56,9 +57,23 @@ public class SemesterService {
 
 	public void delete(Long id) {
 		Optional<Semester> semester = semesterRepository.findById(id);
-		
+
 		if (semester.isPresent()) {
 			semesterRepository.delete(semester.get());
+		}
+	}
+
+	public Semester patch(Long semesterId, SemesterDto semesterDto) {
+		Semester partialSemester = new Semester(semesterDto);
+
+		Semester existingSemester = semesterRepository.findById(semesterId)
+				.orElseThrow(() -> new EntityNotFoundException("Semester not found."));
+
+		try {
+			Patcher.patch(existingSemester, partialSemester);
+			return semesterRepository.save(existingSemester);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to patch Semester", e);
 		}
 	}
 

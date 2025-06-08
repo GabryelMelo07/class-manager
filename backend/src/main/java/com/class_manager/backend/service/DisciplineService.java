@@ -39,6 +39,10 @@ public class DisciplineService {
 		return disciplineRepository.findByCourseId(courseId, pageable);
 	}
 
+	public Page<Discipline> findAll(Pageable pageable) {
+		return disciplineRepository.findAll(pageable);
+	}
+
 	public Optional<Discipline> findById(Long id) {
 		return disciplineRepository.findById(id);
 	}

@@ -26,6 +26,7 @@ import com.class_manager.backend.dto.auth.LoginRequestDto;
 import com.class_manager.backend.dto.auth.LoginResponseDto;
 import com.class_manager.backend.dto.auth.RefreshTokenRequestDto;
 import com.class_manager.backend.dto.auth.ResetPasswordDto;
+import com.class_manager.backend.dto.auth.UpdateUserDto;
 import com.class_manager.backend.dto.auth.UserResponseDto;
 import com.class_manager.backend.enums.RoleName;
 import com.class_manager.backend.exceptions.JwtTokenValidationException;
@@ -38,6 +39,7 @@ import com.class_manager.backend.repository.RoleRepository;
 import com.class_manager.backend.repository.UserRepository;
 import com.class_manager.backend.utils.EmailTemplate;
 import com.class_manager.backend.utils.JwtUtils;
+import com.class_manager.backend.utils.Patcher;
 
 import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityNotFoundException;
@@ -142,8 +144,10 @@ public class UserService {
 		User usuario = user.get();
 		String userId = usuario.getId().toString();
 
-		var accessToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(1, ChronoUnit.HOURS), usuario);
-		var refreshToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(3, ChronoUnit.DAYS), usuario);
+		var accessToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(1, ChronoUnit.HOURS),
+				usuario);
+		var refreshToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(3, ChronoUnit.DAYS),
+				usuario);
 
 		return new LoginResponseDto(accessToken, refreshToken);
 	}
@@ -183,7 +187,8 @@ public class UserService {
 	}
 
 	public LoginResponseDto refreshToken(RefreshTokenRequestDto dto) {
-		Jwt accessToken = noExpiresAtValidatorJwtDecoder.decode(dto.accessToken()); // Decode without expiration validation
+		Jwt accessToken = noExpiresAtValidatorJwtDecoder.decode(dto.accessToken()); // Decode without expiration
+																					// validation
 		Jwt refreshToken = jwtDecoder.decode(dto.refreshToken());
 
 		if (!refreshToken.getIssuer().equals(accessToken.getIssuer()))
@@ -197,9 +202,46 @@ public class UserService {
 				.orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado."));
 		String userId = usuario.getId().toString();
 
-		var newAccessToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(1, ChronoUnit.HOURS), usuario);
-		var newRefreshToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(3, ChronoUnit.DAYS), usuario);
+		var newAccessToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(1, ChronoUnit.HOURS),
+				usuario);
+		var newRefreshToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(3, ChronoUnit.DAYS),
+				usuario);
 		return new LoginResponseDto(newAccessToken, newRefreshToken);
+	}
+
+	public void patch(UUID userId, UpdateUserDto userDto) {
+		User partialUser = new User(userDto);
+
+		User existingUser = userRepository.findById(userId)
+				.orElseThrow(() -> new EntityNotFoundException("User not found."));
+
+		if (!userDto.roles().isEmpty()) {
+			Set<Role> roles = new HashSet<>();
+
+			for (RoleName roleName : userDto.roles()) {
+				var role = roleRepository.findByName(roleName);
+
+				if (role.isPresent())
+					roles.add(role.get());
+			}
+
+			partialUser.setRoles(roles);
+		}
+
+		try {
+			Patcher.patch(existingUser, partialUser);
+			userRepository.save(existingUser);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to patch User", e);
+		}
+	}
+
+	public void deleteSoft(UUID userId) {
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new EntityNotFoundException("User not found."));
+
+		user.setActive(false);
+		userRepository.save(user);
 	}
 
 }
