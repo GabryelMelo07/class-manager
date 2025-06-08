@@ -12,9 +12,10 @@ interface DynamicModalProps {
   trigger: React.ReactNode;
   title: string;
   description?: string;
-  children: React.ReactNode;
+  children: React.ReactElement<{ initialData?: any }>;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  initialData?: any;
 }
 
 export function DynamicModal({
@@ -24,7 +25,12 @@ export function DynamicModal({
   children,
   open,
   onOpenChange,
+  initialData
 }: DynamicModalProps) {
+  const shouldPassInitialData = 
+    React.isValidElement(children) && 
+    typeof children.type !== 'string';
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -33,7 +39,11 @@ export function DynamicModal({
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <div className="mt-4">{children}</div>
+        <div className="mt-4">
+          {shouldPassInitialData
+            ? React.cloneElement(children, { initialData })
+            : children}
+        </div>
       </DialogContent>
     </Dialog>
   );

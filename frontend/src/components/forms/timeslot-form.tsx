@@ -23,28 +23,20 @@ import { useForm } from 'react-hook-form';
 import { DefaultFormProps } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
 import { TimePicker } from '@/components/time-picker';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { SelectGroup } from '@radix-ui/react-select';
 import { requiredFieldMessage } from '@/utils/Helpers';
+import FormButtons from '@/components/forms/form-buttons';
 
-export default function TimeSlotForm({ onSubmit, onCancel }: DefaultFormProps) {
+export default function TimeSlotForm({
+  onSubmit,
+  onCancel,
+  initialData,
+  isEditMode,
+}: DefaultFormProps) {
   const [courses, setCourses] = useState<{ id: number; name: string }[]>([]);
-
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await api.get('/api/v1/courses');
-        setCourses(response.data);
-      } catch (error) {
-        console.error('Erro ao buscar cursos:', error);
-      }
-    };
-
-    fetchCourses();
-  }, []);
 
   const formSchema = z.object({
     daysOfWeek: z
@@ -66,11 +58,13 @@ export default function TimeSlotForm({ onSubmit, onCancel }: DefaultFormProps) {
       })
       .min(1, { message: requiredFieldMessage })
       .min(1, { message: 'Mínimo de 1 minuto' }),
-    courseId: z.coerce
-      .number({
-        invalid_type_error: 'Deve ser um número',
-      })
-      .min(1, { message: requiredFieldMessage }),
+    courseId: isEditMode
+      ? z.coerce.number().optional()
+      : z.coerce
+          .number({
+            invalid_type_error: 'Deve ser um número',
+          })
+          .min(1, { message: requiredFieldMessage }),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -101,6 +95,43 @@ export default function TimeSlotForm({ onSubmit, onCancel }: DefaultFormProps) {
     form.reset();
     form.clearErrors();
   }
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      if (isEditMode) return;
+
+      try {
+        const response = await api.get('/api/v1/courses');
+        setCourses(response.data);
+      } catch (error) {
+        console.error('Erro ao buscar cursos:', error);
+      }
+    };
+
+    fetchCourses();
+  }, [isEditMode]);
+
+  useEffect(() => {
+    if (initialData) {
+      const parseTime = (timeString: string) => {
+        const [hours, minutes] = timeString.split(':').map(Number);
+        return { hours, minutes };
+      };
+
+      const values: any = {
+        daysOfWeek: initialData.daysOfWeek,
+        startTime: parseTime(initialData.startTime),
+        endTime: parseTime(initialData.endTime),
+        lessonDurationMinutes: initialData.lessonDurationMinutes,
+      };
+
+      if (initialData.courseId && !isEditMode) {
+        values.courseId = initialData.courseId;
+      }
+
+      form.reset(values);
+    }
+  }, [initialData, form, isEditMode]);
 
   return (
     <Form {...form}>
@@ -433,51 +464,49 @@ export default function TimeSlotForm({ onSubmit, onCancel }: DefaultFormProps) {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="courseId"
-            render={({ field }) => (
-              <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
-                <FormLabel className="flex shrink-0">Curso</FormLabel>
-                <div className="w-full">
-                  <FormControl>
-                    <Select
-                      {...field}
-                      key="courseId"
-                      value={field.value?.toString()}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecione um curso" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60 overflow-y-auto">
-                        <SelectGroup>
-                          {courses.map((course) => (
-                            <SelectItem
-                              key={course.id}
-                              value={course.id.toString()}
-                              className="hover:bg-accent hover:text-accent-foreground"
-                            >
-                              {course.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </div>
-              </FormItem>
-            )}
-          />
+
+          {!isEditMode && (
+            <FormField
+              control={form.control}
+              name="courseId"
+              render={({ field }) => (
+                <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
+                  <FormLabel className="flex shrink-0">Curso</FormLabel>
+                  <div className="w-full">
+                    <FormControl>
+                      <Select
+                        {...field}
+                        key="courseId"
+                        value={field.value?.toString()}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione um curso" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60 overflow-y-auto">
+                          <SelectGroup>
+                            {courses.map((course) => (
+                              <SelectItem
+                                key={course.id}
+                                value={course.id.toString()}
+                                className="hover:bg-accent hover:text-accent-foreground"
+                              >
+                                {course.name}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
-        <div className="flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button type="submit">Salvar</Button>
-        </div>
+        <FormButtons onCancel={onCancel} isEditMode={isEditMode} />
       </form>
     </Form>
   );

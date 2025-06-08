@@ -670,7 +670,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
       >
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
-          <div className="lg:col-span-1 bg-card dark:bg-secondary rounded-xl shadow-md p-6 max-h-[85vh] flex flex-col">
+          <div className="border lg:col-span-1 bg-card rounded-xl shadow-md p-6 max-h-[85vh] flex flex-col">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold">Meus Cursos</h2>
               {canManage && (
@@ -767,7 +767,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           </div>
 
           {/* Schedule Grid */}
-          <div className="lg:col-span-3 bg-card dark:bg-secondary rounded-xl shadow-md overflow-hidden">
+          <div className="lg:col-span-3 border bg-card rounded-xl shadow-md overflow-hidden">
             <div className="p-6 border-b">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Horário</h2>
@@ -947,6 +947,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
         <div className="flex justify-end gap-3 mt-4">
           <Button
             variant="outline"
+            className="cursor-pointer"
             onClick={() => setIsDeleteScheduleDialogOpen(false)}
           >
             Cancelar
@@ -954,7 +955,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           <Button
             variant="destructive"
             onClick={confirmDelete}
-            className="bg-red-700 hover:bg-red-800 dark:bg-red-700 dark:hover:bg-red-800"
+            className="cursor-pointer bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
           >
             Excluir
           </Button>

@@ -4,7 +4,9 @@ import {
   ChevronUp,
   LogOut,
   Moon,
+  Pencil,
   Sun,
+  Trash2,
 } from 'lucide-react';
 
 import {
@@ -29,39 +31,174 @@ import SemesterForm from '@/components/forms/semester-form';
 import TimeSlotForm from '@/components/forms/timeslot-form';
 import ClassRoomForm from '@/components/forms/class-room-form';
 import DisciplineForm from '@/components/forms/discipline-form';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface HeaderProps {
   userType: UserTypeEnum;
 }
 
 export function Header({ userType }: HeaderProps) {
-  const [openModal, setOpenModal] = useState<string | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
-  const { logout } = useAuth();
   const isAdmin = userType === UserTypeEnum.ADMIN;
+  const { logout } = useAuth();
+  const [openModal, setOpenModal] = useState<string | null>(null);
+  const [cadastrarOpen, setCadastrarOpen] = useState(false);
+  const [editarOpen, setEditarOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [entityType, setEntityType] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [initialFormData, setInitialFormData] = useState<any>(null);
+
+  const fetchItems = async (entity: string, page: number = 0) => {
+    const isFirstPage = page === 0;
+    if (isFirstPage) setLoading(true);
+    else setLoadingMore(true);
+
+    try {
+      const endpoint = getEntityEndpoint(entity);
+      let url = `/api/v1/${endpoint}`;
+
+      if (entity === 'disciplines') {
+        url += '/all';
+      }
+
+      const response = await api.get(url, {
+        params: { page, size: 10 },
+      });
+
+      const responseData = response.data;
+      let itemsData: any[] = [];
+      let pageNumber = 0;
+      let totalPagesCount = 1;
+
+      // Resposta direta (não paginada)
+      if (Array.isArray(responseData)) {
+        itemsData = responseData;
+      } else if (responseData && Array.isArray(responseData.content)) {
+        // Resposta paginada
+        itemsData = responseData.content;
+        pageNumber = responseData.number || 0;
+        totalPagesCount = responseData.totalPages || 1;
+      } else {
+        console.error('Formato de resposta inesperado:', responseData);
+        itemsData = [];
+      }
+
+      setItems((prev) => (isFirstPage ? itemsData : [...prev, ...itemsData]));
+      setCurrentPage(pageNumber);
+      setTotalPages(totalPagesCount);
+    } catch (error) {
+      toast.error(`Erro ao buscar ${entity}`);
+    } finally {
+      if (isFirstPage) setLoading(false);
+      else setLoadingMore(false);
+    }
+  };
+
+  const getEntityExibitionName = (type: string) => {
+    const endpoints: Record<string, string> = {
+      user: 'Usuários',
+      course: 'Cursos',
+      timeSlots: 'Horários de Aula do Curso',
+      semester: 'Semestres',
+      classRoom: 'Salas de Aula',
+      discipline: 'Disciplinas',
+      group: 'Turmas',
+    };
+    return endpoints[type] || type;
+  };
+
+  // Mapeia tipos para endpoints
+  const getEntityEndpoint = (type: string) => {
+    const endpoints: Record<string, string> = {
+      user: 'auth/users',
+      course: 'courses',
+      timeSlots: 'time-slots',
+      semester: 'semesters',
+      classRoom: 'class-rooms',
+      discipline: 'disciplines',
+      group: 'groups',
+    };
+    return endpoints[type] || type;
+  };
+
+  // Abre modal de cadastro
+  const handleOpenCadastrarModal = (modalType: string) => {
+    setCadastrarOpen(false);
+    setEditingId(null);
+    setInitialFormData(null);
+    setTimeout(() => setOpenModal(modalType), 100);
+  };
+
+  // Abre modal de edição (lista)
+  const handleOpenEditarModal = (modalType: string) => {
+    setEntityType(modalType);
+    setEditarOpen(false);
+    setItems([]);
+    setCurrentPage(0);
+
+    setTimeout(() => {
+      setOpenModal('edit-list');
+      fetchItems(getEntityEndpoint(modalType));
+    }, 100);
+  };
+
+  // Abre formulário de edição
+  const handleEditItem = (item: any) => {
+    setInitialFormData(item);
+    setEditingId(item.id);
+    setOpenModal(`edit-${entityType}`);
+  };
+
+  // Exclui item
+  const handleDeleteItem = async (id: string) => {
+    if (!entityType) return;
+
+    try {
+      const endpoint = getEntityEndpoint(entityType);
+      await api.delete(`/api/v1/${endpoint}/${id}`);
+
+      // Atualiza lista
+      setItems((prev) => prev.filter((item) => item.id !== id));
+      toast.success('Item excluído com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao excluir item');
+    }
+  };
 
   const handleUserSubmit = async (data: any) => {
     try {
       const payload = {
         email: data['email-input-0'],
-        password: data['password-input-0'],
+        ...(!editingId && { password: data['password-input-0'] }),
         name: data['text-input-0'],
         surname: data['text-input-1'],
         roles: data['checkbox-group-0'],
       };
 
-      const response = await api.post('/api/v1/auth/register', payload);
-
-      if (response.status !== 201) {
-        throw new Error('Erro ao criar usuário');
+      if (editingId) {
+        await api.patch(`/api/v1/users/${editingId}`, payload);
+      } else {
+        await api.post('/api/v1/auth/register', payload);
       }
 
       setOpenModal(null);
-      toast.success('Usuário criado com sucesso!');
+      toast.success(
+        editingId
+          ? 'Usuário atualizado com sucesso!'
+          : 'Usuário criado com sucesso!'
+      );
     } catch (error) {
-      console.error('Erro ao criar usuário:', error);
-      toast.error('Erro ao criar usuário');
+      console.error('Erro:', error);
+      toast.error(
+        editingId ? 'Erro ao atualizar usuário' : 'Erro ao criar usuário'
+      );
+    } finally {
+      setEditingId(null);
     }
   };
 
@@ -73,17 +210,21 @@ export function Header({ userType }: HeaderProps) {
         coordinatorId: data.coordinator,
       };
 
-      const response = await api.post('/api/v1/courses', payload);
-
-      if (response.status !== 201) {
-        throw new Error('Erro ao criar curso');
+      if (editingId) {
+        await api.patch(`/api/v1/courses/${editingId}`, payload);
+      } else {
+        await api.post('/api/v1/courses', payload);
       }
 
       setOpenModal(null);
       toast.success('Curso criado com sucesso!');
     } catch (error) {
-      console.error('Erro ao criar curso:', error);
-      toast.error('Erro ao criar curso');
+      console.error('Erro:', error);
+      toast.error(
+        editingId ? 'Erro ao atualizar curso' : 'Erro ao criar curso'
+      );
+    } finally {
+      setEditingId(null);
     }
   };
 
@@ -93,23 +234,31 @@ export function Header({ userType }: HeaderProps) {
         startDate: new Date(data['date-0']).toISOString(),
       };
 
-      const response = await api.post('/api/v1/semesters', payload);
-
-      if (response.status !== 201) {
-        throw new Error('Erro ao criar semestre');
+      if (editingId) {
+        await api.patch(`/api/v1/semesters/${editingId}`, payload);
+      } else {
+        await api.post('/api/v1/semesters', payload);
       }
 
       setOpenModal(null);
-      toast.success('Semestre criado com sucesso!');
+      toast.success(
+        editingId
+          ? 'Semestre atualizado com sucesso!'
+          : 'Semestre criado com sucesso!'
+      );
     } catch (error) {
-      console.error('Erro ao criar semestre:', error);
-      toast.error('Erro ao criar semestre');
+      console.error('Erro:', error);
+      toast.error(
+        editingId ? 'Erro ao atualizar semestre' : 'Erro ao criar semestre'
+      );
+    } finally {
+      setEditingId(null);
     }
   };
 
   const handleTimeSlotSubmit = async (data: any) => {
     try {
-      const payload = {
+      const payload: any = {
         daysOfWeek: data.daysOfWeek,
         startTime: `${data.startTime.hours
           .toString()
@@ -122,22 +271,33 @@ export function Header({ userType }: HeaderProps) {
           .toString()
           .padStart(2, '0')}`,
         lessonDurationMinutes: data.lessonDurationMinutes,
-        courseId: data.courseId,
       };
 
-      const response = await api.post('/api/v1/time-slots', payload);
+      if (!editingId) {
+        payload.courseId = data.courseId;
+      }
 
-      if (response.status !== 200) {
-        throw new Error('Erro ao criar ou atualizar horário de aula');
+      if (editingId) {
+        await api.patch(`/api/v1/time-slots/${editingId}`, payload);
+      } else {
+        await api.post('/api/v1/time-slots', payload);
       }
 
       setOpenModal(null);
       toast.success(
-        'Horário de aula do curso criado ou atualizado com sucesso!'
+        editingId
+          ? 'Horário de aula do curso atualizado com sucesso!'
+          : 'Horário de aula do curso criado com sucesso!'
       );
     } catch (error) {
-      console.error('Erro ao criar ou atualizar horário de aula:', error);
-      toast.error('Erro ao criar ou atualizar horário de aula');
+      console.error('Erro:', error);
+      toast.error(
+        editingId
+          ? 'Erro ao atualizar horário de aula'
+          : 'Erro ao criar horário de aula'
+      );
+    } finally {
+      setEditingId(null);
     }
   };
 
@@ -149,17 +309,27 @@ export function Header({ userType }: HeaderProps) {
         location: data.location,
       };
 
-      const response = await api.post('/api/v1/class-rooms', payload);
-
-      if (response.status !== 201) {
-        throw new Error('Erro ao criar sala de aula');
+      if (editingId) {
+        await api.patch(`/api/v1/class-rooms/${editingId}`, payload);
+      } else {
+        await api.post('/api/v1/class-rooms', payload);
       }
 
       setOpenModal(null);
-      toast.success('Sala de aula criada com sucesso!');
+      toast.success(
+        editingId
+          ? 'Sala de aula atualizada com sucesso!'
+          : 'Sala de aula criada com sucesso!'
+      );
     } catch (error) {
-      console.error('Erro ao criar sala de aula:', error);
-      toast.error('Erro ao criar sala de aula');
+      console.error('Erro:', error);
+      toast.error(
+        editingId
+          ? 'Erro ao atualizar sala de aula'
+          : 'Erro ao criar sala de aula'
+      );
+    } finally {
+      setEditingId(null);
     }
   };
 
@@ -172,25 +342,26 @@ export function Header({ userType }: HeaderProps) {
         teacherId: data.teacherId,
       };
 
-      const response = await api.post('/api/v1/disciplines', payload);
-
-      if (response.status !== 201) {
-        throw new Error('Erro ao criar disciplina');
+      if (editingId) {
+        await api.patch(`/api/v1/disciplines/${editingId}`, payload);
+      } else {
+        await api.post('/api/v1/disciplines', payload);
       }
 
       setOpenModal(null);
-      toast.success('Disciplina criada com sucesso!');
+      toast.success(
+        editingId
+          ? 'Disciplina atualizada com sucesso!'
+          : 'Disciplina criada com sucesso!'
+      );
     } catch (error) {
-      console.error('Erro ao criar disciplina:', error);
-      toast.error('Erro ao criar disciplina');
+      console.error('Erro:', error);
+      toast.error(
+        editingId ? 'Erro ao atualizar disciplina' : 'Erro ao criar disciplina'
+      );
+    } finally {
+      setEditingId(null);
     }
-  };
-
-  const handleOpenModal = (modalType: string) => {
-    setDropdownOpen(false); // Fecha o dropdown
-    setTimeout(() => {
-      setOpenModal(modalType); // Abre o modal após um pequeno delay
-    }, 100);
   };
 
   return (
@@ -207,9 +378,10 @@ export function Header({ userType }: HeaderProps) {
               {/* Cadastros */}
               {isAdmin && (
                 <div>
+                  {/* Cadastrar Dropdown */}
                   <DropdownMenu
-                    open={dropdownOpen}
-                    onOpenChange={setDropdownOpen}
+                    open={cadastrarOpen}
+                    onOpenChange={setCadastrarOpen}
                   >
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -217,7 +389,7 @@ export function Header({ userType }: HeaderProps) {
                         className="text-md font-semibold hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
                       >
                         Cadastrar{' '}
-                        {dropdownOpen ? (
+                        {cadastrarOpen ? (
                           <ChevronUp
                             className="font-semibold"
                             strokeWidth={2}
@@ -231,125 +403,306 @@ export function Header({ userType }: HeaderProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleOpenModal('user')}>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenCadastrarModal('user')}
+                      >
                         Usuário
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleOpenModal('course')}
+                        onClick={() => handleOpenCadastrarModal('course')}
                       >
                         Curso
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleOpenModal('timeSlots')}
+                        onClick={() => handleOpenCadastrarModal('timeSlots')}
                       >
                         Horário de aula
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleOpenModal('semester')}
+                        onClick={() => handleOpenCadastrarModal('semester')}
                       >
                         Semestre
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleOpenModal('classRoom')}
+                        onClick={() => handleOpenCadastrarModal('classRoom')}
                       >
                         Sala de Aula
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleOpenModal('discipline')}
+                        onClick={() => handleOpenCadastrarModal('discipline')}
                       >
                         Disciplina
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  {/* Editar dropdown */}
+                  <DropdownMenu open={editarOpen} onOpenChange={setEditarOpen}>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="text-md font-semibold hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
+                      >
+                        Editar{' '}
+                        {editarOpen ? (
+                          <ChevronUp
+                            className="font-semibold"
+                            strokeWidth={2}
+                          />
+                        ) : (
+                          <ChevronDown
+                            className="font-semibold"
+                            strokeWidth={2}
+                          />
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenEditarModal('user')}
+                      >
+                        Usuário
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenEditarModal('course')}
+                      >
+                        Curso
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenEditarModal('timeSlots')}
+                      >
+                        Horário de aula
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenEditarModal('semester')}
+                      >
+                        Semestre
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenEditarModal('classRoom')}
+                      >
+                        Sala de Aula
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenEditarModal('discipline')}
+                      >
+                        Disciplina
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenEditarModal('group')}
+                      >
+                        Turma
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Modal para exibir os registros para edição */}
+                  <DynamicModal
+                    trigger={<div hidden />}
+                    title={`Editar ${getEntityExibitionName(entityType)}`}
+                    description="Editar ou deletar registros"
+                    open={openModal === 'edit-list'}
+                    onOpenChange={(open) => !open && setOpenModal(null)}
+                  >
+                    <div className="max-h-[60vh] overflow-y-auto custom-scroll-bar px-2">
+                      {loading ? (
+                        <div className="space-y-3">
+                          {[...Array(5)].map((_, i) => (
+                            <Skeleton key={i} className="h-12 w-full" />
+                          ))}
+                        </div>
+                      ) : items.length > 0 ? (
+                        <>
+                          {items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex justify-between items-center p-3 border-b"
+                            >
+                              <div>
+                                <p className="font-medium">
+                                  {item.name ||
+                                    item.email ||
+                                    item.title ||
+                                    item.course?.name}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {item.surname ||
+                                    item.abbreviation ||
+                                    item.course?.abbreviation}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="cursor-pointer"
+                                  onClick={() => handleEditItem(item)}
+                                >
+                                  <Pencil size={16} />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="destructive"
+                                  className="cursor-pointer bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
+                                  onClick={() => handleDeleteItem(item.id)}
+                                >
+                                  <Trash2 size={16} />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+
+                          {currentPage < totalPages - 1 && (
+                            <div className="mt-4 text-center">
+                              <Button
+                                variant="outline"
+                                onClick={() =>
+                                  fetchItems(entityType!, currentPage + 1)
+                                }
+                                disabled={loadingMore}
+                              >
+                                {loadingMore
+                                  ? 'Carregando...'
+                                  : 'Carregar Mais'}
+                              </Button>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-center py-4">
+                          Nenhum registro encontrado
+                        </p>
+                      )}
+                    </div>
+                  </DynamicModal>
 
                   {/* Modals */}
                   <DynamicModal
-                    trigger={<div style={{ display: 'none' }} />}
-                    title="Cadastrar Usuário"
-                    description="Preencha os dados para cadastrar um novo usuário"
-                    open={openModal === 'user'}
-                    onOpenChange={(open) => setOpenModal(open ? 'user' : null)}
+                    trigger={<div hidden />}
+                    title={editingId ? 'Editar Usuário' : 'Cadastrar Usuário'}
+                    description={
+                      editingId
+                        ? 'Atualize os dados do usuário'
+                        : 'Preencha os dados para cadastrar um novo usuário'
+                    }
+                    open={openModal === 'user' || openModal === 'edit-user'}
+                    onOpenChange={(open) => !open && setOpenModal(null)}
+                    initialData={initialFormData}
                   >
                     <UserForm
                       onSubmit={handleUserSubmit}
                       onCancel={() => setOpenModal(null)}
+                      isEditMode={!!editingId}
                     />
                   </DynamicModal>
-
                   <DynamicModal
-                    trigger={<div style={{ display: 'none' }} />}
-                    title="Cadastrar Curso"
-                    description="Preencha os dados para cadastrar um novo curso"
-                    open={openModal === 'course'}
-                    onOpenChange={(open) =>
-                      setOpenModal(open ? 'course' : null)
+                    trigger={<div hidden />}
+                    title={editingId ? 'Editar Curso' : 'Cadastrar Curso'}
+                    description={
+                      editingId
+                        ? 'Atualize os dados do curso'
+                        : 'Preencha os dados para cadastrar um novo curso'
                     }
+                    open={openModal === 'course' || openModal === 'edit-course'}
+                    onOpenChange={(open) => !open && setOpenModal(null)}
+                    initialData={initialFormData}
                   >
                     <CourseForm
                       onSubmit={handleCourseSubmit}
                       onCancel={() => setOpenModal(null)}
-                      isOpen={openModal === 'course'}
+                      isEditMode={!!editingId}
                     />
                   </DynamicModal>
-
                   <DynamicModal
-                    trigger={<div style={{ display: 'none' }} />}
-                    title="Cadastrar Horários de Aula"
-                    description="Preencha os dados para os horários de aula do curso"
-                    open={openModal === 'timeSlots'}
-                    onOpenChange={(open) =>
-                      setOpenModal(open ? 'timeSlots' : null)
+                    trigger={<div hidden />}
+                    title={
+                      editingId
+                        ? 'Editar Horários de Aula'
+                        : 'Cadastrar Horários de Aula'
                     }
+                    description={
+                      editingId
+                        ? 'Atualize os dados do horário de aula'
+                        : 'Preencha os dados para cadastrar um novo horário de aula'
+                    }
+                    open={
+                      openModal === 'timeSlots' ||
+                      openModal === 'edit-timeSlots'
+                    }
+                    onOpenChange={(open) => !open && setOpenModal(null)}
+                    initialData={initialFormData}
                   >
                     <TimeSlotForm
                       onSubmit={handleTimeSlotSubmit}
                       onCancel={() => setOpenModal(null)}
+                      isEditMode={!!editingId}
                     />
                   </DynamicModal>
-
                   <DynamicModal
-                    trigger={<div style={{ display: 'none' }} />}
-                    title="Cadastrar Semestre"
-                    description="Preencha os dados para cadastrar um novo semestre"
-                    open={openModal === 'semester'}
-                    onOpenChange={(open) =>
-                      setOpenModal(open ? 'semester' : null)
+                    trigger={<div hidden />}
+                    title={editingId ? 'Editar Semestre' : 'Cadastrar Semestre'}
+                    description={
+                      editingId
+                        ? 'Atualize os dados do semestre'
+                        : 'Preencha os dados para cadastrar um novo semestre'
                     }
+                    open={
+                      openModal === 'semester' || openModal === 'edit-semester'
+                    }
+                    onOpenChange={(open) => !open && setOpenModal(null)}
+                    initialData={initialFormData}
                   >
                     <SemesterForm
                       onSubmit={handleSemesterSubmit}
                       onCancel={() => setOpenModal(null)}
+                      isEditMode={!!editingId}
                     />
                   </DynamicModal>
-
                   <DynamicModal
-                    trigger={<div style={{ display: 'none' }} />}
-                    title="Cadastrar Sala de Aula"
-                    description="Preencha os dados para cadastrar uma nova sala de aula"
-                    open={openModal === 'classRoom'}
-                    onOpenChange={(open) =>
-                      setOpenModal(open ? 'classRoom' : null)
+                    trigger={<div hidden />}
+                    title={
+                      editingId
+                        ? 'Editar Sala de Aula'
+                        : 'Cadastrar Sala de Aula'
                     }
+                    description={
+                      editingId
+                        ? 'Atualize os dados da sala de aula'
+                        : 'Preencha os dados para cadastrar uma nova sala de aula'
+                    }
+                    open={
+                      openModal === 'classRoom' ||
+                      openModal === 'edit-classRoom'
+                    }
+                    onOpenChange={(open) => !open && setOpenModal(null)}
+                    initialData={initialFormData}
                   >
                     <ClassRoomForm
                       onSubmit={handleClassRoomSubmit}
                       onCancel={() => setOpenModal(null)}
+                      isEditMode={!!editingId}
                     />
                   </DynamicModal>
-
                   <DynamicModal
-                    trigger={<div style={{ display: 'none' }} />}
-                    title="Cadastrar Disciplina"
-                    description="Preencha os dados para cadastrar uma nova disciplina"
-                    open={openModal === 'discipline'}
-                    onOpenChange={(open) =>
-                      setOpenModal(open ? 'discipline' : null)
+                    trigger={<div hidden />}
+                    title={
+                      editingId ? 'Editar Disciplina' : 'Cadastrar Disciplina'
                     }
+                    description={
+                      editingId
+                        ? 'Atualize os dados da disciplina'
+                        : 'Preencha os dados para cadastrar uma nova disciplina'
+                    }
+                    open={
+                      openModal === 'discipline' ||
+                      openModal === 'edit-discipline'
+                    }
+                    onOpenChange={(open) => !open && setOpenModal(null)}
+                    initialData={initialFormData}
                   >
                     <DisciplineForm
                       onSubmit={handleDisciplineSubmit}
                       onCancel={() => setOpenModal(null)}
-                      isOpen={openModal === 'discipline'}
+                      isEditMode={!!editingId}
                     />
                   </DynamicModal>
                 </div>

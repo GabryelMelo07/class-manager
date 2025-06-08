@@ -14,13 +14,19 @@ import { useForm } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DefaultFormProps } from '@/lib/types';
-import { Button } from '../ui/button';
-import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
-import { InfoTooltip } from '../info-tooltip';
+import { InfoTooltip } from '@/components/info-tooltip';
 import { requiredFieldMessage } from '@/utils/Helpers';
+import FormButtons from '@/components/forms/form-buttons';
 
-export default function UserForm({ onSubmit, onCancel }: DefaultFormProps) {
+export default function UserForm({
+  onSubmit,
+  onCancel,
+  initialData,
+  isEditMode,
+}: DefaultFormProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   const formSchema = z.object({
@@ -30,9 +36,9 @@ export default function UserForm({ onSubmit, onCancel }: DefaultFormProps) {
       .string()
       .email({ message: 'Endereço de email inválido' })
       .min(1, { message: requiredFieldMessage }),
-    'password-input-0': z
-      .string()
-      .min(1, { message: requiredFieldMessage }),
+    'password-input-0': isEditMode
+      ? z.string().optional()
+      : z.string().min(1, { message: requiredFieldMessage }),
     'checkbox-group-0': z
       .array(z.string())
       .refine((value) => value.some((item) => item), {
@@ -55,6 +61,17 @@ export default function UserForm({ onSubmit, onCancel }: DefaultFormProps) {
     form.reset();
     form.clearErrors();
   }
+
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        'text-input-0': initialData.name,
+        'text-input-1': initialData.surname,
+        'email-input-0': initialData.email,
+        'checkbox-group-0': initialData.roles.map((role) => role.name),
+      });
+    }
+  }, [initialData, form]);
 
   return (
     <Form {...form}>
@@ -141,45 +158,47 @@ export default function UserForm({ onSubmit, onCancel }: DefaultFormProps) {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="password-input-0"
-            render={({ field }) => (
-              <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
-                <FormLabel className="flex shrink-0">Senha</FormLabel>
+          {!isEditMode && (
+            <FormField
+              control={form.control}
+              name="password-input-0"
+              render={({ field }) => (
+                <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
+                  <FormLabel className="flex shrink-0">Senha</FormLabel>
 
-                <div className="w-full">
-                  <FormControl>
-                    <div className="relative w-full">
-                      <Input
-                        key="password-input-0"
-                        placeholder=""
-                        type="password"
-                        id="password-input-0"
-                        className=" pe-9"
-                        {...field}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-1 top-1 h-8 w-8 text-gray-400 hover:text-gray-600"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOffIcon className="size-4" />
-                        ) : (
-                          <EyeIcon className="size-4" strokeWidth={2} />
-                        )}
-                      </Button>
-                    </div>
-                  </FormControl>
+                  <div className="w-full">
+                    <FormControl>
+                      <div className="relative w-full">
+                        <Input
+                          key="password-input-0"
+                          placeholder=""
+                          type={showPassword ? 'text' : 'password'}
+                          id="password-input-0"
+                          className=" pe-9"
+                          {...field}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1 h-8 w-8 text-gray-400 hover:text-gray-600"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOffIcon className="size-4" />
+                          ) : (
+                            <EyeIcon className="size-4" strokeWidth={2} />
+                          )}
+                        </Button>
+                      </div>
+                    </FormControl>
 
-                  <FormMessage />
-                </div>
-              </FormItem>
-            )}
-          />
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+          )}
           <FormField
             control={form.control}
             name="checkbox-group-0"
@@ -318,12 +337,7 @@ export default function UserForm({ onSubmit, onCancel }: DefaultFormProps) {
           />
         </div>
 
-        <div className="flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button type="submit">Salvar</Button>
-        </div>
+        <FormButtons onCancel={onCancel} isEditMode={isEditMode} />
       </form>
     </Form>
   );

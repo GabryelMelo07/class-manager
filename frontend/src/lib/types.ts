@@ -85,4 +85,6 @@ export interface IScheduleItem {
 export interface DefaultFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
+  isEditMode?: boolean;
+  initialData?: any;
 }

@@ -26,8 +26,15 @@ import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { DefaultFormProps } from '@/lib/types';
 import { requiredFieldMessage } from '@/utils/Helpers';
+import { useEffect } from 'react';
+import FormButtons from '@/components/forms/form-buttons';
 
-export default function SemesterForm({ onSubmit, onCancel }: DefaultFormProps) {
+export default function SemesterForm({
+  onSubmit,
+  onCancel,
+  initialData,
+  isEditMode,
+}: DefaultFormProps) {
   const formSchema = z.object({
     'date-0': z.date({
       required_error: requiredFieldMessage,
@@ -45,6 +52,14 @@ export default function SemesterForm({ onSubmit, onCancel }: DefaultFormProps) {
     form.reset();
     form.clearErrors();
   }
+
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        'date-0': initialData.date
+      });
+    }
+  }, [initialData, form]);
 
   return (
     <Form {...form}>
@@ -105,12 +120,7 @@ export default function SemesterForm({ onSubmit, onCancel }: DefaultFormProps) {
           />
         </div>
 
-        <div className="flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button type="submit">Salvar</Button>
-        </div>
+        <FormButtons onCancel={onCancel} isEditMode={isEditMode} />
       </form>
     </Form>
   );

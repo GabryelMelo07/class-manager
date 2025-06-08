@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Form,
@@ -7,17 +7,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { Input } from '@/components/ui/input';
 import { DefaultFormProps } from '@/lib/types';
-import { Button } from "@/components/ui/button";
-import { requiredFieldMessage } from "@/utils/Helpers";
+import { requiredFieldMessage } from '@/utils/Helpers';
+import { useEffect } from 'react';
+import FormButtons from '@/components/forms/form-buttons';
 
-export default function ClassRoomForm({ onSubmit, onCancel }: DefaultFormProps) {
+export default function ClassRoomForm({
+  onSubmit,
+  onCancel,
+  initialData,
+  isEditMode,
+}: DefaultFormProps) {
   const formSchema = z.object({
     name: z.string().min(1, { message: requiredFieldMessage }),
     abbreviation: z.string().min(1, { message: requiredFieldMessage }),
@@ -26,10 +32,10 @@ export default function ClassRoomForm({ onSubmit, onCancel }: DefaultFormProps) 
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      abbreviation: "",
-      location: "",
+    defaultValues: initialData || {
+      name: '',
+      abbreviation: '',
+      location: '',
     },
   });
 
@@ -37,6 +43,16 @@ export default function ClassRoomForm({ onSubmit, onCancel }: DefaultFormProps) 
     form.reset();
     form.clearErrors();
   }
+
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        name: initialData.name,
+        abbreviation: initialData.abbreviation,
+        location: initialData.location
+      });
+    }
+  }, [initialData, form]);
 
   return (
     <Form {...form}>
@@ -126,12 +142,7 @@ export default function ClassRoomForm({ onSubmit, onCancel }: DefaultFormProps) 
           />
         </div>
 
-        <div className="flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button type="submit">Salvar</Button>
-        </div>
+        <FormButtons onCancel={onCancel} isEditMode={isEditMode} />
       </form>
     </Form>
   );
