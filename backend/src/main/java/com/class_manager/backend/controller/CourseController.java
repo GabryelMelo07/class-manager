@@ -77,7 +77,7 @@ public class CourseController {
 	@DeleteMapping("/{id}")
 	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
-		courseService.deleteById(id);
+		courseService.deleteSoft(id);
 		return ResponseEntity.noContent().build();
 	}
 	

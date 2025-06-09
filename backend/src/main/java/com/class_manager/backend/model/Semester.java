@@ -55,6 +55,10 @@ public class Semester {
     @Column(nullable = false)
     private SemesterStatus status;
 
+	// Control to delete soft
+	@Column(columnDefinition = "boolean default true")
+	private Boolean active;
+
 	@OneToMany(mappedBy = "semester", orphanRemoval = true, cascade = CascadeType.REMOVE)
 	@JsonIgnore
 	private List<Schedule> schedules;

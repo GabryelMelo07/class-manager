@@ -55,7 +55,7 @@ public class DisciplineController {
 	@DeleteMapping("/{id}")
 	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
-		disciplineService.deleteById(id);
+		disciplineService.deleteSoft(id);
 		return ResponseEntity.noContent().build();
 	}
 

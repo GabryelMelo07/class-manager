@@ -55,10 +55,9 @@ public class CourseService {
 			throw new UnauthorizedException();
 		}
 
-		return courseRepository.findAll();
+		return courseRepository.findByActiveTrue();
 	}
 
-	// TODO: POSSÍVELMENTE NÃO SERÁ USADO, ANALISAR E REMOVER
 	public Optional<Course> findById(Long id) {
 		return courseRepository.findById(id);
 	}
@@ -82,6 +81,10 @@ public class CourseService {
 		Course existingCourse = courseRepository.findById(courseId)
 				.orElseThrow(() -> new EntityNotFoundException(
 						"Course not found"));
+
+		if (existingCourse.getActive() == false) {
+			throw new RuntimeException("Failed to patch Course");
+		}
 
 		Course partialCourse = new Course(dto);
 		UUID coordinatorId = dto.coordinatorId();
@@ -107,8 +110,12 @@ public class CourseService {
 		}
 	}
 
-	public void deleteById(Long id) {
-		courseRepository.deleteById(id);
+	public void deleteSoft(Long id) {
+		Course course = courseRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("Course not found."));
+
+		course.setActive(false);
+		courseRepository.save(course);
 	}
 
 	public User getUserFromToken(JwtAuthenticationToken token) {

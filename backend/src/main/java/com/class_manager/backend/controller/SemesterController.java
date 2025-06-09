@@ -47,7 +47,7 @@ public class SemesterController {
 	@DeleteMapping("/{id}")	
 	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
-		semesterService.delete(id);
+		semesterService.deleteSoft(id);
 		return ResponseEntity.noContent().build();
 	}
 

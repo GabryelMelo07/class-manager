@@ -33,6 +33,12 @@ public class Group {
 	@Column
 	private Integer semesterOfCourse;
 
+	@Column
+	private String color;
+
+	@Column(columnDefinition = "boolean default true")
+	private Boolean active;
+
 	@ManyToOne(cascade = CascadeType.PERSIST)
 	@JoinColumn(name = "discipline_id")
 	private Discipline discipline;
@@ -40,9 +46,6 @@ public class Group {
 	@ManyToOne(cascade = CascadeType.PERSIST)
 	@JoinColumn(name = "class_room_id")
 	private ClassRoom classRoom;
-
-	@Column
-	private String color;
 
 	public Group(GroupDto dto) {
 		this.name = dto.name();

@@ -27,12 +27,10 @@ public class GroupController {
         return ResponseEntity.ok(groupService.findAllByCourse(courseId, pageable));
     }
 
-	// TODO: POSSÍVELMENTE NÃO SERÁ USADO, ANALISAR E REMOVER
-    @GetMapping("/{id}")
-    public ResponseEntity<Group> findById(@PathVariable Long id) {
-        return groupService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+	@GetMapping("/all")
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_COORDINATOR')")
+    public ResponseEntity<Page<Group>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(groupService.findAll(pageable));
     }
 
 	@GetMapping("/semesters-of-course/{courseId}")
@@ -55,7 +53,7 @@ public class GroupController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_COORDINATOR')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        groupService.deleteById(id);
+        groupService.deleteSoft(id);
         return ResponseEntity.noContent().build();
     }
 

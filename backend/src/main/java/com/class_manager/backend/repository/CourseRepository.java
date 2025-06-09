@@ -13,15 +13,17 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
 	@Query("""
 			SELECT c FROM Course c
-				WHERE c.coordinator = :user
+				WHERE c.active = true AND c.coordinator = :user
 	""")
 	Course findCoordinatedCourseByUser(@Param("user") User user);
 
 	@Query("""
 			SELECT DISTINCT c FROM Course c
 				LEFT JOIN c.disciplines d
-				WHERE d.teacher = :user AND NOT c.coordinator = :user
+				WHERE c.active = true AND d.teacher = :user AND NOT c.coordinator = :user
 	""")
 	List<Course> findTeachingCoursesByUser(@Param("user") User user);
 	
+	List<Course> findByActiveTrue();
+
 }

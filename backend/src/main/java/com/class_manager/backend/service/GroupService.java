@@ -33,6 +33,10 @@ public class GroupService {
 		return groupRepository.findAllByCourse(courseId, pageable);
 	}
 
+	public Page<Group> findAll(Pageable pageable) {
+		return groupRepository.findByActiveTrue(pageable);
+	}
+
 	public Optional<Group> findById(Long id) {
 		return groupRepository.findById(id);
 	}
@@ -59,10 +63,14 @@ public class GroupService {
 	}
 
 	public Group patch(Long groupId, GroupDto groupDto) {
-		Group partialGroup = new Group(groupDto);
-
 		Group existingGroup = groupRepository.findById(groupId)
 				.orElseThrow(() -> new EntityNotFoundException("Group not found with id: " + groupId));
+		
+		if (existingGroup.getActive() == false) {
+			throw new RuntimeException("Failed to patch Group");
+		}
+				
+		Group partialGroup = new Group(groupDto);
 
 		if (groupDto.disciplineId() != null) {
 			Discipline discipline = disciplineRepository.findById(groupDto.disciplineId())
@@ -88,8 +96,12 @@ public class GroupService {
 		}
 	}
 
-	public void deleteById(Long id) {
-		groupRepository.deleteById(id);
+	public void deleteSoft(Long id) {
+		Group group = groupRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("Group not found."));
+		
+		group.setActive(false);
+		groupRepository.save(group);
 	}
 
 }

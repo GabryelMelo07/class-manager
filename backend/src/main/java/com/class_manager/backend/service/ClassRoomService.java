@@ -23,7 +23,7 @@ public class ClassRoomService {
 	private final ClassRoomRepository classRoomRepository;
 
 	public Page<ClassRoom> findAll(Pageable pageable) {
-		return classRoomRepository.findAll(pageable);
+		return classRoomRepository.findByActiveTrue(pageable);
 	}
 
 	public Optional<ClassRoom> findById(Long id) {
@@ -36,10 +36,14 @@ public class ClassRoomService {
 	}
 
 	public ClassRoom patch(Long classRoomId, ClassRoomDto classRoomDto) {
-		ClassRoom partialClassRoom = new ClassRoom(classRoomDto);
-		
 		ClassRoom existingClassRoom = classRoomRepository.findById(classRoomId)
 				.orElseThrow(() -> new EntityNotFoundException("ClassRoom not found whit id: " + classRoomId));
+
+		if (existingClassRoom.getActive() == false) {
+			throw new RuntimeException("Failed to patch ClassRoom");
+		}
+
+		ClassRoom partialClassRoom = new ClassRoom(classRoomDto);
 
 		try {
 			Patcher.patch(existingClassRoom, partialClassRoom);
@@ -50,8 +54,12 @@ public class ClassRoomService {
 		}
 	}
 
-	public void deleteById(Long id) {
-		classRoomRepository.deleteById(id);
+	public void deleteSoft(Long id) {
+		ClassRoom classRoom = classRoomRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("Class Room not found."));
+
+		classRoom.setActive(false);
+		classRoomRepository.save(classRoom);
 	}
 
 }

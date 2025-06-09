@@ -16,7 +16,7 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
 	@Query("""
 			SELECT g FROM Group g
-				WHERE g.discipline.course.id = :courseId
+				WHERE g.active = true AND g.discipline.course.id = :courseId
 			""")
 	Page<Group> findAllByCourse(@Param("courseId") Long courseId, Pageable pageable);
 
@@ -25,4 +25,7 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 				WHERE g.semesterOfCourse IS NOT NULL AND g.discipline.course.id = :courseId ORDER BY g.semesterOfCourse
 			""")
 	List<Integer> findAllDistinctSemestersOrdered(@Param("courseId") Long courseId);
+
+	Page<Group> findByActiveTrue(Pageable pageable);
+
 }

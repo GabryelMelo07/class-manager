@@ -10,8 +10,15 @@ import com.class_manager.backend.model.Semester;
 public interface SemesterRepository extends JpaRepository<Semester, Long> {
 
 	@Query("""
-			SELECT s FROM Semester s ORDER BY
-			CASE s.status WHEN 'ACTIVE' THEN 0 WHEN 'FINALIZED' THEN 1 ELSE 2 END, s.startDate ASC
+			SELECT s FROM Semester s
+			WHERE s.active = true
+			ORDER BY
+				CASE s.status
+					WHEN 'ACTIVE' THEN 0
+					WHEN 'FINALIZED' THEN 1
+					ELSE 2
+				END,
+				s.startDate ASC
 			""")
 	Page<Semester> findAllOrderByStatusActive(Pageable pageable);
 

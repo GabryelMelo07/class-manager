@@ -1,7 +1,6 @@
 package com.class_manager.backend.service;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -55,19 +54,15 @@ public class SemesterService {
 		return save(semester);
 	}
 
-	public void delete(Long id) {
-		Optional<Semester> semester = semesterRepository.findById(id);
-
-		if (semester.isPresent()) {
-			semesterRepository.delete(semester.get());
-		}
-	}
-
 	public Semester patch(Long semesterId, SemesterDto semesterDto) {
-		Semester partialSemester = new Semester(semesterDto);
-
 		Semester existingSemester = semesterRepository.findById(semesterId)
 				.orElseThrow(() -> new EntityNotFoundException("Semester not found."));
+
+		if (existingSemester.getActive() == false) {
+			throw new RuntimeException("Failed to patch Semester");
+		}
+				
+		Semester partialSemester = new Semester(semesterDto);
 
 		try {
 			Patcher.patch(existingSemester, partialSemester);
@@ -77,4 +72,12 @@ public class SemesterService {
 		}
 	}
 
+	public void deleteSoft(Long id) {
+		Semester semester = semesterRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("Semester not found."));
+
+		semester.setActive(false);
+		semesterRepository.save(semester);
+	}
+	
 }

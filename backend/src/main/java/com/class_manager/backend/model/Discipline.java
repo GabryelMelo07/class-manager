@@ -31,6 +31,9 @@ public class Discipline {
 	@Column(nullable = false, length = 15)
 	private String abbreviation;
 
+	@Column(columnDefinition = "boolean default true")
+	private Boolean active;
+
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "course_id", nullable = false)
 	@JsonIgnoreProperties({"disciplines"})
