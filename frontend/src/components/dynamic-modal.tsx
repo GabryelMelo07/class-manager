@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 interface DynamicModalProps {
   trigger: React.ReactNode;
@@ -16,6 +17,7 @@ interface DynamicModalProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   initialData?: any;
+  className?: string;
 }
 
 export function DynamicModal({
@@ -25,7 +27,8 @@ export function DynamicModal({
   children,
   open,
   onOpenChange,
-  initialData
+  initialData,
+  className
 }: DynamicModalProps) {
   const shouldPassInitialData = 
     React.isValidElement(children) && 
@@ -34,7 +37,7 @@ export function DynamicModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-md max-h-screen overflow-y-auto">
+      <DialogContent className={cn("sm:max-w-md max-h-screen overflow-y-auto", className)}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

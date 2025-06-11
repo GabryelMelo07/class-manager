@@ -57,8 +57,12 @@ export default function DisciplineForm({
   const formSchema = z.object({
     name: z.string().min(1, { message: requiredFieldMessage }),
     abbreviation: z.string().min(1, { message: requiredFieldMessage }),
-    courseId: z.string().min(1, { message: requiredFieldMessage }),
-    teacherId: z.string().min(1, { message: requiredFieldMessage }),
+    courseId: isEditMode
+      ? z.string().optional()
+      : z.string().min(1, { message: requiredFieldMessage }),
+    teacherId: isEditMode
+      ? z.string().optional()
+      : z.string().min(1, { message: requiredFieldMessage }),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -139,8 +143,8 @@ export default function DisciplineForm({
       form.reset({
         name: initialData.name,
         abbreviation: initialData.abbreviation,
-        courseId: initialData.course?.id,
-        teacherId: initialData.teacher?.id,
+        courseId: initialData.course?.id || '',
+        teacherId: initialData.teacher?.id || '',
       });
     }
   }, [initialData, form]);
@@ -216,7 +220,7 @@ export default function DisciplineForm({
                   <FormControl>
                     <Select
                       {...field}
-                      key="select-0"
+                      key={field.name}
                       value={field.value}
                       onValueChange={field.onChange}
                     >
@@ -255,7 +259,7 @@ export default function DisciplineForm({
                   <FormControl>
                     <Select
                       {...field}
-                      key="teacherId"
+                      key={field.name}
                       value={field.value}
                       onValueChange={field.onChange}
                     >
@@ -281,6 +285,7 @@ export default function DisciplineForm({
                             <Button
                               variant="ghost"
                               size="sm"
+                              type="button"
                               onClick={() => fetchTeachers(pagination.page + 1)}
                               className="w-full"
                             >

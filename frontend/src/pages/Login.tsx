@@ -74,12 +74,12 @@ export function Login() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-indigo-600 text-white shadow-lg">
+      <header className="bg-primary text-white shadow-lg">
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
               <CalendarIcon className="h-6 w-6" />
-              <h1 className="text-2xl font-bold">Organizador Acadêmico</h1>
+              <h1 className="text-2xl font-bold">Class Manager</h1>
             </div>
           </div>
         </div>
@@ -169,7 +169,7 @@ export function Login() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700"
+                  className="w-full bg-primary hover:bg-indigo-700"
                   disabled={loading}
                 >
                   {loading ? (
@@ -187,7 +187,7 @@ export function Login() {
         </div>
 
         {/* Right Side - Benefits */}
-        <div className="hidden md:block md:w-1/2 bg-indigo-600">
+        <div className="hidden md:block md:w-1/2 bg-primary">
           <LoginBenefits />
         </div>
       </main>

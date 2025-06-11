@@ -62,7 +62,9 @@ export default function CourseForm({
   const formSchema = z.object({
     name: z.string().min(1, { message: requiredFieldMessage }),
     abbreviation: z.string().min(1, { message: requiredFieldMessage }),
-    coordinator: z.string().min(1, { message: requiredFieldMessage }),
+    coordinator: isEditMode
+      ? z.string().optional()
+      : z.string().min(1, { message: requiredFieldMessage }),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -135,7 +137,7 @@ export default function CourseForm({
       form.reset({
         name: initialData.name,
         abbreviation: initialData.abbreviation,
-        coordinator: initialData.coordinator?.id || '', // Acesse o ID corretamente
+        coordinator: initialData.coordinator?.id || '',
       });
     } else {
       form.reset({
@@ -217,7 +219,7 @@ export default function CourseForm({
                   <FormControl>
                     <Select
                       {...field}
-                      key="coordinator"
+                      key={field.name}
                       value={field.value}
                       onValueChange={field.onChange}
                     >
@@ -244,6 +246,7 @@ export default function CourseForm({
                             <Button
                               variant="ghost"
                               size="sm"
+                              type="button"
                               onClick={() =>
                                 fetchCoordinators(pagination.page + 1)
                               }

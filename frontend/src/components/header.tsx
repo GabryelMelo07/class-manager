@@ -39,6 +39,7 @@ interface HeaderProps {
 
 export function Header({ userType }: HeaderProps) {
   const isAdmin = userType === UserTypeEnum.ADMIN;
+  const isCoordinator = userType === UserTypeEnum.COORDINATOR;
   const { logout } = useAuth();
   const [openModal, setOpenModal] = useState<string | null>(null);
   const [cadastrarOpen, setCadastrarOpen] = useState(false);
@@ -52,6 +53,11 @@ export function Header({ userType }: HeaderProps) {
   const [entityType, setEntityType] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [initialFormData, setInitialFormData] = useState<any>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const fetchItems = async (entity: string, page: number = 0) => {
     const isFirstPage = page === 0;
@@ -63,6 +69,10 @@ export function Header({ userType }: HeaderProps) {
       let url = `/api/v1/${endpoint}`;
 
       if (entity === 'disciplines') {
+        url += '/all';
+      }
+
+      if (entity === 'groups') {
         url += '/all';
       }
 
@@ -186,7 +196,6 @@ export function Header({ userType }: HeaderProps) {
         await api.post('/api/v1/auth/register', payload);
       }
 
-      setOpenModal(null);
       toast.success(
         editingId
           ? 'Usuário atualizado com sucesso!'
@@ -199,25 +208,36 @@ export function Header({ userType }: HeaderProps) {
       );
     } finally {
       setEditingId(null);
+      setOpenModal(null);
     }
   };
 
   const handleCourseSubmit = async (data: any) => {
     try {
-      const payload = {
+      const payload: any = {
         name: data.name,
         abbreviation: data.abbreviation,
         coordinatorId: data.coordinator,
       };
 
       if (editingId) {
+        if (
+          payload.coordinatorId === '' ||
+          payload.coordinatorId === undefined
+        ) {
+          delete payload.coordinatorId;
+        }
+
         await api.patch(`/api/v1/courses/${editingId}`, payload);
       } else {
         await api.post('/api/v1/courses', payload);
       }
 
-      setOpenModal(null);
-      toast.success('Curso criado com sucesso!');
+      toast.success(
+        editingId
+          ? 'Curso atualizado com sucesso!'
+          : 'Curso criado com sucesso!'
+      );
     } catch (error) {
       console.error('Erro:', error);
       toast.error(
@@ -225,6 +245,7 @@ export function Header({ userType }: HeaderProps) {
       );
     } finally {
       setEditingId(null);
+      setOpenModal(null);
     }
   };
 
@@ -240,7 +261,6 @@ export function Header({ userType }: HeaderProps) {
         await api.post('/api/v1/semesters', payload);
       }
 
-      setOpenModal(null);
       toast.success(
         editingId
           ? 'Semestre atualizado com sucesso!'
@@ -253,6 +273,7 @@ export function Header({ userType }: HeaderProps) {
       );
     } finally {
       setEditingId(null);
+      setOpenModal(null);
     }
   };
 
@@ -283,7 +304,6 @@ export function Header({ userType }: HeaderProps) {
         await api.post('/api/v1/time-slots', payload);
       }
 
-      setOpenModal(null);
       toast.success(
         editingId
           ? 'Horário de aula do curso atualizado com sucesso!'
@@ -298,6 +318,7 @@ export function Header({ userType }: HeaderProps) {
       );
     } finally {
       setEditingId(null);
+      setOpenModal(null);
     }
   };
 
@@ -315,7 +336,6 @@ export function Header({ userType }: HeaderProps) {
         await api.post('/api/v1/class-rooms', payload);
       }
 
-      setOpenModal(null);
       toast.success(
         editingId
           ? 'Sala de aula atualizada com sucesso!'
@@ -330,6 +350,7 @@ export function Header({ userType }: HeaderProps) {
       );
     } finally {
       setEditingId(null);
+      setOpenModal(null);
     }
   };
 
@@ -343,12 +364,19 @@ export function Header({ userType }: HeaderProps) {
       };
 
       if (editingId) {
+        if (payload.courseId === '' || payload.courseId === undefined) {
+          delete payload.courseId;
+        }
+
+        if (payload.teacherId === '' || payload.teacherId === undefined) {
+          delete payload.teacherId;
+        }
+
         await api.patch(`/api/v1/disciplines/${editingId}`, payload);
       } else {
         await api.post('/api/v1/disciplines', payload);
       }
 
-      setOpenModal(null);
       toast.success(
         editingId
           ? 'Disciplina atualizada com sucesso!'
@@ -361,12 +389,13 @@ export function Header({ userType }: HeaderProps) {
       );
     } finally {
       setEditingId(null);
+      setOpenModal(null);
     }
   };
 
   return (
     <>
-      <header className="bg-indigo-600 text-white shadow-lg">
+      <header className="bg-primary text-white shadow-lg">
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
@@ -502,6 +531,7 @@ export function Header({ userType }: HeaderProps) {
                     description="Editar ou deletar registros"
                     open={openModal === 'edit-list'}
                     onOpenChange={(open) => !open && setOpenModal(null)}
+                    className='md:max-w-2/6 lg:max-w-2/6'
                   >
                     <div className="max-h-[60vh] overflow-y-auto custom-scroll-bar px-2">
                       {loading ? (
@@ -529,6 +559,11 @@ export function Header({ userType }: HeaderProps) {
                                     item.abbreviation ||
                                     item.course?.abbreviation}
                                 </p>
+                                { getEntityEndpoint(entityType) === 'groups' && (
+                                  <p className="text-sm text-muted-foreground">
+                                    Curso {item.discipline?.course?.name}
+                                  </p>
+                                )}
                               </div>
                               <div className="flex gap-2">
                                 <Button
@@ -537,15 +572,22 @@ export function Header({ userType }: HeaderProps) {
                                   className="cursor-pointer"
                                   onClick={() => handleEditItem(item)}
                                 >
-                                  <Pencil size={16} />
+                                  <Pencil size={16} strokeWidth={2} />
                                 </Button>
                                 <Button
                                   size="icon"
                                   variant="destructive"
                                   className="cursor-pointer bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
-                                  onClick={() => handleDeleteItem(item.id)}
+                                  onClick={() => {
+                                    setItemToDelete({
+                                      id: item.id,
+                                      name:
+                                        item.name || item.email || item.title,
+                                    });
+                                    setConfirmDeleteOpen(true);
+                                  }}
                                 >
-                                  <Trash2 size={16} />
+                                  <Trash2 size={16} strokeWidth={2} />
                                 </Button>
                               </div>
                             </div>
@@ -572,6 +614,38 @@ export function Header({ userType }: HeaderProps) {
                           Nenhum registro encontrado
                         </p>
                       )}
+                    </div>
+                  </DynamicModal>
+
+                  {/* Modal de Confirmação de Exclusão */}
+                  <DynamicModal
+                    trigger={<div hidden />}
+                    title="Confirmar Exclusão"
+                    description={`Tem certeza que deseja excluir "${itemToDelete?.name}"?`}
+                    open={confirmDeleteOpen}
+                    onOpenChange={setConfirmDeleteOpen}
+                  >
+                    <div className="flex justify-end gap-4 mt-4">
+                      <Button
+                        variant="outline"
+                        className="cursor-pointer"
+                        onClick={() => setConfirmDeleteOpen(false)}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="cursor-pointer bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
+                        onClick={async () => {
+                          if (itemToDelete) {
+                            await handleDeleteItem(itemToDelete.id);
+                            setConfirmDeleteOpen(false);
+                            setItemToDelete(null);
+                          }
+                        }}
+                      >
+                        Confirmar Exclusão
+                      </Button>
                     </div>
                   </DynamicModal>
 
