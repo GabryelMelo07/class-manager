@@ -172,7 +172,7 @@ public class ScheduleService {
 		);
 
 		if (hasConflict) {
-			throw new InvalidScheduleException("Grupo já possui um agendamento neste horário");
+			throw new InvalidScheduleException("Group already has an schedule at this time");
 		}
 	}
 
