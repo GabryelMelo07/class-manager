@@ -30,8 +30,8 @@ public class ClassRoom {
 	@Column(nullable = false, length = 50)
 	private String location;
 
-	@Column(columnDefinition = "boolean default true")
-	private Boolean active;
+	@Column(nullable = false)
+	private Boolean active = true;
 	
 	public ClassRoom(ClassRoomDto createClassRoomDto) {
 		this.name = createClassRoomDto.name();

@@ -50,8 +50,8 @@ public class User {
     @Column(nullable = false, length = 50)
     private String surname;
 
-	@Column(columnDefinition = "boolean default true")
-	private Boolean active;
+	@Column(nullable = false)
+	private Boolean active = true;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

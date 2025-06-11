@@ -33,8 +33,8 @@ public class Course {
 	@Column(nullable = false, length = 10)
 	private String abbreviation;
 
-	@Column(columnDefinition = "boolean default true")
-	private Boolean active;
+	@Column(nullable = false)
+	private Boolean active = true;
 
 	@OneToOne
     @JoinColumn(name = "coordinator_id", unique = true)

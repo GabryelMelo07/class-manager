@@ -36,8 +36,8 @@ public class Group {
 	@Column
 	private String color;
 
-	@Column(columnDefinition = "boolean default true")
-	private Boolean active;
+	@Column(nullable = false)
+	private Boolean active = true;
 
 	@ManyToOne(cascade = CascadeType.PERSIST)
 	@JoinColumn(name = "discipline_id")
