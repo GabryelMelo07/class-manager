@@ -88,3 +88,13 @@ export interface DefaultFormProps {
   isEditMode?: boolean;
   initialData?: any;
 }
+
+export interface PaginatedResponse<T> {
+  content: T[];
+  page: {
+    size: number;
+    number: number;
+    totalPages: number;
+    totalElements: number;
+  }
+}

@@ -28,6 +28,7 @@ import { DefaultFormProps } from '@/lib/types';
 import { requiredFieldMessage } from '@/utils/Helpers';
 import { useEffect } from 'react';
 import FormButtons from '@/components/forms/form-buttons';
+import { cn } from '@/lib/utils';
 
 export default function SemesterForm({
   onSubmit,
@@ -56,7 +57,7 @@ export default function SemesterForm({
   useEffect(() => {
     if (initialData) {
       form.reset({
-        'date-0': initialData.date
+        'date-0': initialData.date,
       });
     }
   }, [initialData, form]);
@@ -82,29 +83,25 @@ export default function SemesterForm({
                     <Popover modal={true}>
                       <PopoverTrigger asChild>
                         <Button
-                          variant={'outline'}
-                          className="justify-start text-left font-normal w-full"
-                          id="date-0"
-                          name=""
+                          variant="outline"
+                          className={cn(
+                            'justify-start text-left font-normal w-full',
+                            !field.value && 'text-muted-foreground'
+                          )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {field.value ? (
                             format(field.value, 'PPP')
                           ) : (
-                            <span className="text-muted-foreground">
-                              Selecione uma data
-                            </span>
+                            <span>Pick a date</span>
                           )}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
+                      <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date(new Date().setHours(0, 0, 0, 0))
-                          }
                         />
                       </PopoverContent>
                     </Popover>

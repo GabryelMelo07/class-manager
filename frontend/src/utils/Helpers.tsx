@@ -33,3 +33,13 @@ export const formatTimeSlot = (startTime: string, endTime: string) => {
   const format = (time: string) => time.slice(0, 5); // Remove os segundos
   return `${format(startTime)}-${format(endTime)}`;
 };
+
+export const getTranslatedErrorMessage  = (originalErrorMessage: string) => {
+  const mappedErrors: Record<string, string> = {
+    'Teacher already has a lesson scheduled for this time': 'O professor já tem uma aula agendada para esse horário',
+    'Class Room already occupied at this time': 'Sala de aula já ocupada neste horário',
+    'Group already has an schedule at this time': 'Turma já tem um agendamento neste horário',
+  }
+
+  return mappedErrors[originalErrorMessage] || '';
+}

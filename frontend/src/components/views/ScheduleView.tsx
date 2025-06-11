@@ -33,9 +33,10 @@ import GroupForm from '@/components/forms/group-form';
 import { DynamicModal } from '@/components/dynamic-modal';
 import { CustomCheckboxGroup } from '@/components/custom-checkbox-group';
 import { UserTypeEnum } from '@/utils/UserTypeEnum';
-import { DAY_ORDER, formatTimeSlot, getColorClasses } from '@/utils/Helpers';
+import { DAY_ORDER, formatTimeSlot, getColorClasses, getTranslatedErrorMessage } from '@/utils/Helpers';
 import { useReactToPrint } from 'react-to-print';
 import ScheduleTable from '@/components/schedule-table';
+import { useRefreshDataContext } from '@/context/RefreshDataContext';
 
 const usePagination = (initialPage = 0) => {
   const [page, setPage] = useState(initialPage);
@@ -90,6 +91,8 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
 
   // Referência para a tabela
   const scheduleTableRef = useRef<HTMLDivElement>(null);
+
+  const { refreshTriggerMap, triggerRefresh } = useRefreshDataContext();
 
   // Valida se o usuário tem permissão para gerenciar horários do curso
   const canManageCourse = () => {
@@ -149,7 +152,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     };
 
     fetchCourses();
-  }, [userType]);
+  }, [userType, refreshTriggerMap.courses]);
 
   // Fetch time slots when course changes
   useEffect(() => {
@@ -242,7 +245,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     };
 
     fetchGroups();
-  }, [selectedCourse, groupsPagination.page]);
+  }, [selectedCourse, groupsPagination.page, refreshTriggerMap.groups]);
 
   // Fetch Semesters
   useEffect(() => {
@@ -290,7 +293,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     };
 
     fetchSemesters();
-  }, [semestersPagination.page]);
+  }, [semestersPagination.page, refreshTriggerMap.semesters]);
 
   // TODO: Adicionar a opção de ver Meus horários
   // Fetch schedules when course or semester changes
@@ -328,7 +331,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     };
 
     fetchCourseSemesters();
-  }, [selectedCourse]);
+  }, [selectedCourse, refreshTriggerMap.groups]);
 
   const renderCourseSelect = () => {
     // ADMIN e PROFESSOR: lista simples de cursos
@@ -511,6 +514,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
       setGroups((prev) => [...prev, response.data]);
 
       toast.success('Turma criada com sucesso!');
+      triggerRefresh('groups');
     } catch (error) {
       console.error('Erro ao criar turma:', error);
       toast.error('Erro ao criar turma');
@@ -625,7 +629,15 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
       setActiveItem(null);
     } catch (error) {
       console.error('Error creating or updating schedule:', error);
-      toast.error('Erro ao salvar horário.');
+
+      const { data, status } = error.response;
+      let translatedErrorMessage: string;
+
+      if (data.status === 'CONFLICT' && status === 409) {
+        translatedErrorMessage = getTranslatedErrorMessage(data.error);
+      }
+      
+      toast.error(translatedErrorMessage);
     }
   };
 

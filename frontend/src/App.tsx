@@ -6,37 +6,42 @@ import { Home } from '@/pages/Home';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/context/ThemeContext';
 import NotFound from '@/pages/NotFound';
+import { RefreshDataProvider } from '@/context/RefreshDataContext';
 
 export function App() {
   return (
     <Router>
       <AuthProvider>
         <ThemeProvider>
-          <Toaster
-            position="top-right"
-            richColors
-            closeButton
-            visibleToasts={3}
-            toastOptions={{
-              duration: 3000,
-              classNames: {
-                toast: 'font-sans text-sm',
-              },
-            }}
-          />
-          
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route
-              path="/"
-              element={
-                <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'PROFESSOR']}>
-                  <Home />
-                </PrivateRoute>
-              }
+          <RefreshDataProvider>
+            <Toaster
+              position="top-right"
+              richColors
+              closeButton
+              visibleToasts={3}
+              toastOptions={{
+                duration: 3000,
+                classNames: {
+                  toast: 'font-sans text-sm',
+                },
+              }}
             />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/"
+                element={
+                  <PrivateRoute
+                    allowedRoles={['ADMIN', 'COORDENADOR', 'PROFESSOR']}
+                  >
+                    <Home />
+                  </PrivateRoute>
+                }
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </RefreshDataProvider>
         </ThemeProvider>
       </AuthProvider>
     </Router>

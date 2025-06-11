@@ -19,7 +19,7 @@ import {
 
 import { z } from 'zod';
 import api from '@/lib/api';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/ui/input';
@@ -37,6 +37,8 @@ export default function GroupForm({
   onSubmit,
   onCancel,
   courseId,
+  isEditMode,
+  initialData,
 }: GroupFormProps) {
   const [disciplines, setDisciplines] = useState<
     { id: number; name: string }[]
@@ -44,49 +46,6 @@ export default function GroupForm({
   const [classRooms, setClassRooms] = useState<{ id: number; name: string }[]>(
     []
   );
-
-  if (!courseId) {
-    return (
-      <div className="text-center p-4">
-        <p className="text-yellow-600 mb-4">
-          Selecione um curso antes de criar uma turma
-        </p>
-        <Button variant="outline" onClick={onCancel}>
-          Voltar
-        </Button>
-      </div>
-    );
-  }
-
-  useEffect(() => {
-    const fetchDisciplines = async () => {
-      try {
-        if (!courseId) {
-          setDisciplines([]);
-          return;
-        }
-
-        const response = await api.get(
-          `/api/v1/disciplines?courseId=${courseId}`
-        );
-        setDisciplines(response.data.content);
-      } catch (error) {
-        console.error('Erro ao buscar disciplinas:', error);
-      }
-    };
-
-    const fetchClassRooms = async () => {
-      try {
-        const response = await api.get('/api/v1/class-rooms');
-        setClassRooms(response.data.content);
-      } catch (error) {
-        console.error('Erro ao buscar salas de aula:', error);
-      }
-    };
-
-    fetchDisciplines();
-    fetchClassRooms();
-  }, []);
 
   const formSchema = z.object({
     name: z.string().min(1, { message: requiredFieldMessage }),
@@ -98,8 +57,12 @@ export default function GroupForm({
       })
       .min(1, { message: requiredFieldMessage })
       .min(1, { message: 'Este campo deve ser pelo menos 1' }),
-    disciplineId: z.string().min(1, { message: requiredFieldMessage }),
-    classRoomId: z.string().min(1, { message: requiredFieldMessage }),
+    disciplineId: isEditMode
+      ? z.string().optional()
+      : z.string().min(1, { message: requiredFieldMessage }),
+    classRoomId: isEditMode
+      ? z.string().optional()
+      : z.string().min(1, { message: requiredFieldMessage }),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -118,6 +81,47 @@ export default function GroupForm({
     form.reset();
     form.clearErrors();
   }
+
+  const fetchDisciplines = useCallback(async () => {
+    try {
+      if (isEditMode && initialData) {
+        courseId = initialData.discipline?.course?.id;
+      }
+
+      const response = await api.get(`/api/v1/disciplines?courseId=${courseId}`);
+      setDisciplines(response.data.content || []);
+    } catch (error) {
+      console.error('Erro ao buscar disciplinas:', error);
+    }
+  }, []);
+
+  const fetchClassRooms = useCallback(async () => {
+    try {
+      const response = await api.get('/api/v1/class-rooms');
+      setClassRooms(response.data.content || []);
+    } catch (error) {
+      console.error('Erro ao buscar salas de aula:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDisciplines();
+    fetchClassRooms();
+  }, []);
+
+  // Preencher formulário com dados iniciais quando em modo de edição
+  useEffect(() => {
+    if (isEditMode && initialData) {
+      form.reset({
+        name: initialData.name,
+        abbreviation: initialData.abbreviation,
+        color: initialData.color,
+        semesterOfCourse: initialData.semesterOfCourse,
+        disciplineId: initialData.discipline?.id?.toString(),
+        classRoomId: initialData.classRoom?.id?.toString(),
+      });
+    }
+  }, [isEditMode, initialData, form]);
 
   return (
     <Form {...form}>

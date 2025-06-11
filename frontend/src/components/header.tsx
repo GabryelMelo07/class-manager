@@ -32,6 +32,8 @@ import TimeSlotForm from '@/components/forms/timeslot-form';
 import ClassRoomForm from '@/components/forms/class-room-form';
 import DisciplineForm from '@/components/forms/discipline-form';
 import { Skeleton } from '@/components/ui/skeleton';
+import GroupForm from './forms/group-form';
+import { useRefreshDataContext } from '@/context/RefreshDataContext';
 
 interface HeaderProps {
   userType: UserTypeEnum;
@@ -58,9 +60,10 @@ export function Header({ userType }: HeaderProps) {
     id: string;
     name: string;
   } | null>(null);
+  const { triggerRefresh } = useRefreshDataContext();
 
-  const fetchItems = async (entity: string, page: number = 0) => {
-    const isFirstPage = page === 0;
+  const fetchItems = async (entity: string, actualPage: number = 0) => {
+    const isFirstPage = actualPage === 0;
     if (isFirstPage) setLoading(true);
     else setLoadingMore(true);
 
@@ -77,10 +80,11 @@ export function Header({ userType }: HeaderProps) {
       }
 
       const response = await api.get(url, {
-        params: { page, size: 10 },
+        params: { page: actualPage, size: 10 },
       });
 
       const responseData = response.data;
+
       let itemsData: any[] = [];
       let pageNumber = 0;
       let totalPagesCount = 1;
@@ -91,8 +95,8 @@ export function Header({ userType }: HeaderProps) {
       } else if (responseData && Array.isArray(responseData.content)) {
         // Resposta paginada
         itemsData = responseData.content;
-        pageNumber = responseData.number || 0;
-        totalPagesCount = responseData.totalPages || 1;
+        pageNumber = responseData.page.number || 0;
+        totalPagesCount = responseData.page.totalPages || 1;
       } else {
         console.error('Formato de resposta inesperado:', responseData);
         itemsData = [];
@@ -238,6 +242,8 @@ export function Header({ userType }: HeaderProps) {
           ? 'Curso atualizado com sucesso!'
           : 'Curso criado com sucesso!'
       );
+
+      triggerRefresh('courses');
     } catch (error) {
       console.error('Erro:', error);
       toast.error(
@@ -266,6 +272,8 @@ export function Header({ userType }: HeaderProps) {
           ? 'Semestre atualizado com sucesso!'
           : 'Semestre criado com sucesso!'
       );
+
+      triggerRefresh('semesters');
     } catch (error) {
       console.error('Erro:', error);
       toast.error(
@@ -393,6 +401,35 @@ export function Header({ userType }: HeaderProps) {
     }
   };
 
+  const handleGroupEditSubmit = async (data: any) => {
+    try {
+      const payload = {
+        ...data
+      };
+
+      if (editingId) {
+        if (payload.classRoomId === '' || payload.classRoomId === undefined) {
+          delete payload.classRoomId;
+        }
+
+        if (payload.disciplineId === '' || payload.disciplineId === undefined) {
+          delete payload.disciplineId;
+        }
+      }
+
+      await api.patch(`/api/v1/groups/${editingId}`, payload);
+
+      toast.success('Disciplina atualizada com sucesso!');
+      triggerRefresh('groups');
+    } catch (error) {
+      console.error('Erro:', error);
+      toast.error('Erro ao atualizar turma');
+    } finally {
+      setEditingId(null);
+      setOpenModal(null);
+    }
+  };
+
   return (
     <>
       <header className="bg-primary text-white shadow-lg">
@@ -404,7 +441,7 @@ export function Header({ userType }: HeaderProps) {
             </div>
 
             <div className="flex items-center space-x-4">
-              {/* Cadastros */}
+              {/* Cadastros (apenas para admin) */}
               {isAdmin && (
                 <div>
                   {/* Cadastrar Dropdown */}
@@ -464,6 +501,12 @@ export function Header({ userType }: HeaderProps) {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                </div>
+              )}
+
+              {/* EDITAR: Renderizar para Admin e Coordenador */}
+              {(isAdmin || isCoordinator) && (
+                <div>
                   {/* Editar dropdown */}
                   <DropdownMenu open={editarOpen} onOpenChange={setEditarOpen}>
                     <DropdownMenuTrigger asChild>
@@ -486,41 +529,53 @@ export function Header({ userType }: HeaderProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      <DropdownMenuItem
-                        onClick={() => handleOpenEditarModal('user')}
-                      >
-                        Usuário
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleOpenEditarModal('course')}
-                      >
-                        Curso
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleOpenEditarModal('timeSlots')}
-                      >
-                        Horário de aula
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleOpenEditarModal('semester')}
-                      >
-                        Semestre
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleOpenEditarModal('classRoom')}
-                      >
-                        Sala de Aula
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleOpenEditarModal('discipline')}
-                      >
-                        Disciplina
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleOpenEditarModal('group')}
-                      >
-                        Turma
-                      </DropdownMenuItem>
+                      {/* Mostrar todas opções para Admin */}
+                      {isAdmin ? (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenEditarModal('user')}
+                          >
+                            Usuário
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenEditarModal('course')}
+                          >
+                            Curso
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenEditarModal('timeSlots')}
+                          >
+                            Horário de aula
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenEditarModal('semester')}
+                          >
+                            Semestre
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenEditarModal('classRoom')}
+                          >
+                            Sala de Aula
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenEditarModal('discipline')}
+                          >
+                            Disciplina
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenEditarModal('groups')}
+                          >
+                            Turma
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        // Mostrar apenas Turma para Coordenador
+                        <DropdownMenuItem
+                          onClick={() => handleOpenEditarModal('group')}
+                        >
+                          Turma
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
 
@@ -531,7 +586,7 @@ export function Header({ userType }: HeaderProps) {
                     description="Editar ou deletar registros"
                     open={openModal === 'edit-list'}
                     onOpenChange={(open) => !open && setOpenModal(null)}
-                    className='md:max-w-2/6 lg:max-w-2/6'
+                    className="md:max-w-2/6 lg:max-w-2/6"
                   >
                     <div className="max-h-[60vh] overflow-y-auto custom-scroll-bar px-2">
                       {loading ? (
@@ -559,7 +614,7 @@ export function Header({ userType }: HeaderProps) {
                                     item.abbreviation ||
                                     item.course?.abbreviation}
                                 </p>
-                                { getEntityEndpoint(entityType) === 'groups' && (
+                                {getEntityEndpoint(entityType) === 'groups' && (
                                   <p className="text-sm text-muted-foreground">
                                     Curso {item.discipline?.course?.name}
                                   </p>
@@ -775,6 +830,20 @@ export function Header({ userType }: HeaderProps) {
                   >
                     <DisciplineForm
                       onSubmit={handleDisciplineSubmit}
+                      onCancel={() => setOpenModal(null)}
+                      isEditMode={!!editingId}
+                    />
+                  </DynamicModal>
+                  <DynamicModal
+                    trigger={<div hidden />}
+                    title={'Editar Turma'}
+                    description={'Atualize os dados da turma'}
+                    open={openModal === 'edit-groups'}
+                    onOpenChange={(open) => !open && setOpenModal(null)}
+                    initialData={initialFormData}
+                  >
+                    <GroupForm
+                      onSubmit={handleGroupEditSubmit}
                       onCancel={() => setOpenModal(null)}
                       isEditMode={!!editingId}
                     />

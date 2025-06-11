@@ -23,20 +23,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
-import { DefaultFormProps, Person } from '@/lib/types';
+import { DefaultFormProps, PaginatedResponse, Person } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import { Loader } from 'lucide-react';
 import { requiredFieldMessage } from '@/utils/Helpers';
 import FormButtons from '@/components/forms/form-buttons';
-
-interface PaginatedResponse<T> {
-  content: T[];
-  totalPages: number;
-  totalElements: number;
-  number: number;
-  size: number;
-}
 
 export default function DisciplineForm({
   onSubmit,
@@ -120,9 +112,9 @@ export default function DisciplineForm({
 
         setPagination((prev) => ({
           ...prev,
-          page: data.number,
-          totalPages: data.totalPages,
-          hasMore: data.number < data.totalPages - 1,
+          page: data.page.number,
+          totalPages: data.page.totalPages,
+          hasMore: data.page.number < data.page.totalPages - 1,
           loading: false,
         }));
       } catch (error) {
