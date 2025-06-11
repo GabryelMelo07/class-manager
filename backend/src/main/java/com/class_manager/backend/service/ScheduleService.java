@@ -128,6 +128,7 @@ public class ScheduleService {
 
 		boolean hasConflict = scheduleRepository.existsByTeacherAndTime(
 				teacher.getId(),
+				schedule.getSemesterId(),
 				schedule.getDayOfWeek(),
 				schedule.getStartTime(),
 				schedule.getEndTime(),
@@ -146,6 +147,7 @@ public class ScheduleService {
 
 		boolean hasConflict = scheduleRepository.existsByClassRoomAndTime(
 				classRoom.getId(),
+				schedule.getSemesterId(),
 				schedule.getDayOfWeek(),
 				schedule.getStartTime(),
 				schedule.getEndTime(),
@@ -162,10 +164,12 @@ public class ScheduleService {
 
 		boolean hasConflict = scheduleRepository.existsByGroupAndTime(
 				groupId,
+				schedule.getSemesterId(),
 				schedule.getDayOfWeek(),
 				schedule.getStartTime(),
 				schedule.getEndTime(),
-				schedule.getId());
+				schedule.getId()
+		);
 
 		if (hasConflict) {
 			throw new InvalidScheduleException("Grupo já possui um agendamento neste horário");

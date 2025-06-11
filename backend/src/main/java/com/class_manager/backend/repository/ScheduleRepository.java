@@ -32,7 +32,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
         SELECT COUNT(s) > 0 
         FROM Schedule s
         WHERE 
-            s.group.discipline.teacher.id = :teacherId
+			s.semester.id = :semesterId
+            AND s.group.discipline.teacher.id = :teacherId
             AND s.dayOfWeek = :dayOfWeek
             AND (
                 (s.startTime < :endTime AND s.endTime > :startTime)
@@ -40,7 +41,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             AND (:excludeId IS NULL OR s.id <> :excludeId)
     """)
     boolean existsByTeacherAndTime(
-        @Param("teacherId") UUID teacherId,
+		@Param("teacherId") UUID teacherId,
+		@Param("semesterId") Long semesterId,
         @Param("dayOfWeek") DayOfWeek dayOfWeek,
         @Param("startTime") LocalTime startTime,
         @Param("endTime") LocalTime endTime,
@@ -51,7 +53,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
         SELECT COUNT(s) > 0 
         FROM Schedule s
         WHERE 
-            s.group.classRoom.id = :classRoomId
+			s.semester.id = :semesterId
+            AND s.group.classRoom.id = :classRoomId
             AND s.dayOfWeek = :dayOfWeek
             AND (
                 (s.startTime < :endTime AND s.endTime > :startTime)
@@ -59,7 +62,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             AND (:excludeId IS NULL OR s.id <> :excludeId)
     """)
     boolean existsByClassRoomAndTime(
-        @Param("classRoomId") Long classRoomId,
+		@Param("classRoomId") Long classRoomId,
+		@Param("semesterId") Long semesterId,
         @Param("dayOfWeek") DayOfWeek dayOfWeek,
         @Param("startTime") LocalTime startTime,
         @Param("endTime") LocalTime endTime,
@@ -70,7 +74,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 		SELECT COUNT(s) > 0 
 		FROM Schedule s
 		WHERE 
-			s.group.id = :groupId
+			s.semester.id = :semesterId
+			AND s.group.id = :groupId
 			AND s.dayOfWeek = :dayOfWeek
 			AND s.startTime = :startTime
 			AND s.endTime = :endTime
@@ -78,6 +83,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 	""")
 	boolean existsByGroupAndTime(
 		@Param("groupId") Long groupId,
+		@Param("semesterId") Long semesterId,
 		@Param("dayOfWeek") DayOfWeek dayOfWeek,
 		@Param("startTime") LocalTime startTime,
 		@Param("endTime") LocalTime endTime,

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.class_manager.backend.dto.RestErrorMessage;
+import com.class_manager.backend.exceptions.InvalidScheduleException;
 import com.class_manager.backend.exceptions.JwtTokenValidationException;
 import com.class_manager.backend.exceptions.ResetPasswordTokenInvalidException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -90,6 +91,11 @@ public class ExceptionHandlerController extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(DataAccessException.class)
 	private ResponseEntity<RestErrorMessage> dataAccessExceptionHandler(DataAccessException exception) {
 		return buildResponse(HttpStatus.BAD_REQUEST, "Data access error", exception);
+	}
+
+	@ExceptionHandler(InvalidScheduleException.class)
+	private ResponseEntity<RestErrorMessage> invalidScheduleExceptionHandler(InvalidScheduleException exception) {
+		return buildResponse(HttpStatus.CONFLICT, exception.getMessage(), exception);
 	}
 
 	@ExceptionHandler(Exception.class)
