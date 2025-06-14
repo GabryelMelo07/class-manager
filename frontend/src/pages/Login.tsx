@@ -10,7 +10,6 @@ import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  CalendarIcon,
   EyeIcon,
   EyeOffIcon,
   Loader2,
@@ -78,8 +77,11 @@ export function Login() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <CalendarIcon className="h-8 w-8" />
-              <h1 className="text-2xl font-bold">Class Manager</h1>
+              <img
+                className="w-[250px] h-max"
+                src="logo_horizontal_branco.png"
+                alt="Logo Class Manager"
+              />
             </div>
           </div>
         </div>

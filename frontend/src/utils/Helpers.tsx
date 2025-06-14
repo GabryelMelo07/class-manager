@@ -63,6 +63,7 @@ export const getTranslatedErrorMessage  = (originalErrorMessage: string) => {
     'Teacher already has a lesson scheduled for this time': 'O professor já tem uma aula agendada para esse horário',
     'Class Room already occupied at this time': 'Sala de aula já ocupada neste horário',
     'Group already has an schedule at this time': 'Turma já tem um agendamento neste horário',
+    'Cannot create schedule for a finalized semester': 'Não é possível criar horário(s) para um semestre finalizado'
   }
 
   return mappedErrors[originalErrorMessage] || '';

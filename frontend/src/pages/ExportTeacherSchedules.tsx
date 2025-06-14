@@ -21,7 +21,6 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { formatTimeSlot, usePagination } from '@/utils/Helpers';
 
-// Mapeamento fixo de dias para professores
 const TEACHER_DAYS_MAP: Record<string, string> = {
   MONDAY: 'Segunda',
   TUESDAY: 'Terça',
@@ -88,7 +87,6 @@ export default function ExportTeachersSchedules() {
     const fetchTeachersData = async () => {
       setLoading(true);
       try {
-        // Paginação de professores (poderia ser chunked se API suportar)
         const response = await api.get(
           `/api/v1/users/teachers?page=${teachersPagination.page}&size=50`
         );
@@ -126,7 +124,6 @@ export default function ExportTeachersSchedules() {
           response.data.page.number + 1 < response.data.page.totalPages
         );
 
-        // Atualizar slots combinados
         const allSchedules = [
           ...(teachersPagination.page === 0
             ? []

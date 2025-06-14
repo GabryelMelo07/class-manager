@@ -25,7 +25,14 @@ import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import type { Course, Group, IScheduleItem, Semester } from '@/lib/types';
 import { toast } from 'sonner';
-import { Download, Info, Loader2, Plus } from 'lucide-react';
+import {
+  Copy,
+  Download,
+  Info,
+  Loader2,
+  Plus,
+  TriangleAlert,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GroupCard } from '@/components/group-card';
@@ -33,7 +40,13 @@ import GroupForm from '@/components/forms/group-form';
 import { DynamicModal } from '@/components/dynamic-modal';
 import { CustomCheckboxGroup } from '@/components/custom-checkbox-group';
 import { UserTypeEnum } from '@/utils/UserTypeEnum';
-import { DAY_ORDER, formatTimeSlot, generateTimeSlots, getColorClasses, getTranslatedErrorMessage } from '@/utils/Helpers';
+import {
+  DAY_ORDER,
+  formatTimeSlot,
+  generateTimeSlots,
+  getColorClasses,
+  getTranslatedErrorMessage,
+} from '@/utils/Helpers';
 import { useReactToPrint } from 'react-to-print';
 import ScheduleTable from '@/components/schedule-table';
 import { useRefreshDataContext } from '@/context/RefreshDataContext';
@@ -84,6 +97,10 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
   const [isDeleteScheduleDialogOpen, setIsDeleteScheduleDialogOpen] =
     useState(false);
   const [scheduleToDelete, setScheduleToDelete] = useState<number | null>(null);
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+  const [selectedSourceSemester, setSelectedSourceSemester] =
+    useState<Semester | null>(null);
+  const [isConfirmCopyModalOpen, setIsConfirmCopyModalOpen] = useState(false);
 
   // Pagination hooks
   const groupsPagination = usePagination();
@@ -521,6 +538,36 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     }
   };
 
+  const handleCopySchedules = async () => {
+    if (!selectedSourceSemester || !selectedSemester || !selectedCourse) return;
+
+    try {
+      const response = await api.post('/api/v1/schedules/copy-schedules', {
+        fromSemesterId: selectedSourceSemester.id,
+        toSemesterId: selectedSemester.id,
+        courseId: selectedCourse.id,
+      });
+
+      toast.success('Horários copiados com sucesso!');
+      setSchedules(response.data);
+    } catch (error) {
+      console.error('Error copying the schedules:', error);
+
+      const { data, status } = error.response;
+      let errorMessage: string;
+
+      if (data.status === 'CONFLICT' && status === 409) {
+        errorMessage = getTranslatedErrorMessage(data.error);
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      setIsConfirmCopyModalOpen(false);
+      setIsCopyModalOpen(false);
+      setSelectedSourceSemester(null);
+    }
+  };
+
   const handlePrint = useReactToPrint({
     contentRef: scheduleTableRef,
     documentTitle: `Horário do curso ${selectedCourse?.name || ''} ${
@@ -636,7 +683,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
       if (data.status === 'CONFLICT' && status === 409) {
         translatedErrorMessage = getTranslatedErrorMessage(data.error);
       }
-      
+
       toast.error(translatedErrorMessage);
     }
   };
@@ -660,7 +707,6 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="xl:col-span-1 bg-card rounded-xl shadow-md p-4 max-h-[85vh] flex flex-col">
-
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold">Meus Cursos</h2>
               {canManage && (
@@ -845,8 +891,24 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
                       )}
                     </SelectContent>
                   </Select>
+
+                  {/* Copy schedules Button */}
+                  {canManage && (
+                    <Button
+                      onClick={() => setIsCopyModalOpen(true)}
+                      variant="outline"
+                      title="Copiar horários de outro semestre"
+                      className="hover:text-secondary-foreground"
+                    >
+                      <Copy strokeWidth={2} className="mr-2" />
+                      Copiar
+                    </Button>
+                  )}
+
+                  {/* Export schedules Button */}
                   <Button
                     onClick={handlePrint}
+                    title="Exportar horários para PDF"
                     className="bg-primary hover:bg-[#5b1693]"
                   >
                     <Download strokeWidth={2} />
@@ -862,7 +924,6 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
                   }))}
                   selectedValues={selectedCustomCheckboxSemesters}
                   onChange={setSelectedCustomCheckboxSemesters}
-                  className="flex-nowrap overflow-x-auto pb-1"
                 />
               </div>
             </div>
@@ -950,6 +1011,124 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           >
             Excluir
           </Button>
+        </div>
+      </DynamicModal>
+
+      {/* Modal de seleção de semestre fonte para cópia de schedules */}
+      <DynamicModal
+        trigger={<div style={{ display: 'none' }} />}
+        title="Copiar Horário"
+        description="Selecione o semestre de origem para copiar os horários para o semestre atual"
+        open={isCopyModalOpen}
+        onOpenChange={setIsCopyModalOpen}
+      >
+        <div className="space-y-4">
+          <Select
+            onValueChange={(semesterId) => {
+              const semester = semesters.find(
+                (s) => s.id === Number(semesterId)
+              );
+              setSelectedSourceSemester(semester || null);
+            }}
+            value={selectedSourceSemester?.id?.toString() || ''}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecione o semestre de origem" />
+            </SelectTrigger>
+            <SelectContent>
+              {semesters
+                .filter((s) => s.id !== selectedSemester?.id) // Exclui o semestre atual
+                .map((semester) => (
+                  <SelectItem key={semester.id} value={semester.id.toString()}>
+                    {semester.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsCopyModalOpen(false);
+                setSelectedSourceSemester(null);
+              }}
+              className="hover:text-secondary-foreground"
+            >
+              Cancelar
+            </Button>
+            <Button
+              disabled={!selectedSourceSemester}
+              onClick={() => {
+                setIsCopyModalOpen(false);
+                setIsConfirmCopyModalOpen(true);
+              }}
+            >
+              Continuar
+            </Button>
+          </div>
+        </div>
+      </DynamicModal>
+
+      {/* Modal de confirmação de cópia de schedules */}
+      <DynamicModal
+        trigger={<div style={{ display: 'none' }} />}
+        title="Confirmar Cópia"
+        open={isConfirmCopyModalOpen}
+        onOpenChange={setIsConfirmCopyModalOpen}
+      >
+        <div className="space-y-4">
+          <div className="">
+            <div className="flex">
+              <div className="ml-3">
+                <div className='flex justify-evenly mb-4'>
+                  <TriangleAlert strokeWidth={2} className='text-yellow-300' />
+                  <span className="font-bold text-yellow-300">ALERTA</span>
+                  <TriangleAlert strokeWidth={2} className='text-yellow-300' />
+                </div>
+                <p className="text-sm text-secondary-foreground">
+                  {' '}
+                  Você está prestes a copiar todos os horários do semestre
+                  <span className="font-semibold text-primary-foreground">
+                    {' '}
+                    "{selectedSourceSemester?.name}"
+                  </span>{' '}
+                  para o semestre atual
+                  <span className="font-semibold text-primary-foreground">
+                    {' '}
+                    "{selectedSemester?.name}"
+                  </span>
+                  .
+                  <br />
+                  <br />
+                  Esta ação irá{' '}
+                  <span className="font-bold text-red-600">
+                    SOBRESCREVER
+                  </span>{' '}
+                  todos os horários existentes no semestre atual.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsConfirmCopyModalOpen(false);
+                setSelectedSourceSemester(null);
+              }}
+              className="hover:text-secondary-foreground"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCopySchedules}
+              className="bg-primary hover:bg-[#5b1693]"
+            >
+              Confirmar Cópia
+            </Button>
+          </div>
         </div>
       </DynamicModal>
     </>
