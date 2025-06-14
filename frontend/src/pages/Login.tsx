@@ -78,7 +78,7 @@ export function Login() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <CalendarIcon className="h-6 w-6" />
+              <CalendarIcon className="h-8 w-8" />
               <h1 className="text-2xl font-bold">Class Manager</h1>
             </div>
           </div>
@@ -169,7 +169,7 @@ export function Login() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-primary hover:bg-indigo-700"
+                  className="w-full bg-primary hover:bg-[#5b1693]"
                   disabled={loading}
                 >
                   {loading ? (

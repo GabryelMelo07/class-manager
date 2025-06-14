@@ -34,6 +34,7 @@ import DisciplineForm from '@/components/forms/discipline-form';
 import { Skeleton } from '@/components/ui/skeleton';
 import GroupForm from './forms/group-form';
 import { useRefreshDataContext } from '@/context/RefreshDataContext';
+import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
   userType: UserTypeEnum;
@@ -46,6 +47,7 @@ export function Header({ userType }: HeaderProps) {
   const [openModal, setOpenModal] = useState<string | null>(null);
   const [cadastrarOpen, setCadastrarOpen] = useState(false);
   const [editarOpen, setEditarOpen] = useState(false);
+  const [exportarOpen, setExportarOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -61,6 +63,7 @@ export function Header({ userType }: HeaderProps) {
     name: string;
   } | null>(null);
   const { triggerRefresh } = useRefreshDataContext();
+  const navigate = useNavigate();
 
   const fetchItems = async (entity: string, actualPage: number = 0) => {
     const isFirstPage = actualPage === 0;
@@ -404,7 +407,7 @@ export function Header({ userType }: HeaderProps) {
   const handleGroupEditSubmit = async (data: any) => {
     try {
       const payload = {
-        ...data
+        ...data,
       };
 
       if (editingId) {
@@ -436,8 +439,11 @@ export function Header({ userType }: HeaderProps) {
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <CalendarIcon className="h-6 w-6" />
-              <h1 className="text-2xl font-bold">Class Manager</h1>
+              <img
+                className="w-[250px] h-max"
+                src="logo_horizontal_branco.png"
+                alt="Logo Class Manager"
+              />
             </div>
 
             <div className="flex items-center space-x-4">
@@ -849,6 +855,46 @@ export function Header({ userType }: HeaderProps) {
                     />
                   </DynamicModal>
                 </div>
+              )}
+
+              {/* Export Button */}
+              {userType !== UserTypeEnum.TEACHER && userType !== UserTypeEnum.PUBLIC && (
+                <DropdownMenu
+                  open={exportarOpen}
+                  onOpenChange={setExportarOpen}
+                >
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        className="text-md font-semibold hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
+                      >
+                        Exportar{' '}
+                        {exportarOpen ? (
+                          <ChevronUp
+                            className="font-semibold"
+                            strokeWidth={2}
+                          />
+                        ) : (
+                          <ChevronDown
+                            className="font-semibold"
+                            strokeWidth={2}
+                          />
+                        )}
+                      </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                        onClick={() => {navigate('/export-schedules')}}
+                      >
+                        Todos Horários
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {navigate('/export-schedules-by-teacher')}}
+                      >
+                        Horários por Professor
+                      </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
 
               {/* Logout Button */}

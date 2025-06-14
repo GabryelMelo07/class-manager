@@ -9,8 +9,8 @@ export default function NotFound() {
     <div className="flex flex-col items-center justify-center min-h-screen px-4">
       <div className="text-center max-w-md">
         <div className="flex justify-center mb-6">
-          <div className="rounded-full bg-indigo-100 p-4">
-            <AlertCircle className="h-12 w-12 text-indigo-500" />
+          <div className="rounded-full bg-accent p-4">
+            <AlertCircle className="h-12 w-12 text-primary" />
           </div>
         </div>
 
@@ -26,7 +26,7 @@ export default function NotFound() {
           <Button
             onClick={() => navigate('/')}
             asChild
-            className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
+            className="bg-primary hover:bg-[#5b1693] text-white cursor-pointer"
           >
             <div className="flex items-center">
               <Home className="mr-2 h-4 w-4" />

@@ -71,6 +71,10 @@ export interface IScheduleItem {
       teacher: {
         fullName: string;
       };
+      course: {
+        name: string;
+        abbreviation: string;
+      }
     };
     classRoom: {
       id: number;

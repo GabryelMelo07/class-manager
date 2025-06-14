@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 export const requiredFieldMessage = "Este campo é obrigatório";
 
 export const DAY_ORDER = [
@@ -8,6 +10,28 @@ export const DAY_ORDER = [
   'FRIDAY',
   'SATURDAY',
 ];
+
+export const generateTimeSlots = (start: string, end: string, duration: number) => {
+  const normalizeTime = (time: string) => {
+    const parts = time.split(':');
+    return parts.length === 2 ? `${time}:00` : time;
+  };
+
+  const slots = [];
+  const startDate = new Date(`1970-01-01T${normalizeTime(start)}`);
+  const endDate = new Date(`1970-01-01T${normalizeTime(end)}`);
+
+  while (startDate < endDate) {
+    const endTime = new Date(startDate.getTime() + duration * 60000);
+    if (endTime > endDate) break;
+
+    const format = (date: Date) => date.toTimeString().slice(0, 5);
+    slots.push(`${format(startDate)}-${format(endTime)}`);
+    startDate.setTime(endTime.getTime());
+  }
+
+  return slots;
+};
 
 export const groupColors = [
   { name: "red", bgClass: "bg-red-100", darkerBgClass: "bg-red-500", borderClass: "border-red-500" },
@@ -43,3 +67,18 @@ export const getTranslatedErrorMessage  = (originalErrorMessage: string) => {
 
   return mappedErrors[originalErrorMessage] || '';
 }
+
+export const usePagination = (initialPage = 0) => {
+  const [page, setPage] = useState(initialPage);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  return {
+    page,
+    hasMore,
+    isLoading,
+    setPage,
+    setHasMore,
+    setIsLoading,
+    loadMore: () => setPage((prev) => prev + 1),
+  };
+};

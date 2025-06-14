@@ -7,10 +7,12 @@ export default function ScheduleItem({
   schedule,
   draggable,
   onDeleteSchedule,
+  showCourse = false
 }: {
   schedule: IScheduleItem;
   draggable: boolean;
   onDeleteSchedule: (id: number) => void;
+  showCourse?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: schedule.id,
@@ -88,6 +90,12 @@ export default function ScheduleItem({
       )}
 
       <div className="flex flex-col justify-between pr-2 h-28 overflow-hidden">
+        {/* Nova linha para mostrar o curso quando necessário */}
+          {showCourse && schedule.group?.discipline?.course && (
+            <p className="text-xs text-gray-500 break-words mt-1">
+              {schedule.group.discipline.course.abbreviation}
+            </p>
+          )}
         <div>
           <h4 className="font-medium text-sm flex-1 break-words text-gray-900 dark:text-gray-900">
             {schedule.group?.abbreviation}
@@ -99,9 +107,12 @@ export default function ScheduleItem({
         <p className="text-xs text-gray-500 break-words">
           {schedule.group?.classRoom?.abbreviation}
         </p>
-        <p className="mt-2 text-xs text-gray-500 break-words">
-          {schedule.group?.discipline?.teacher?.fullName}
-        </p>
+
+        {!showCourse && (
+          <p className="mt-2 text-xs text-gray-500 break-words">
+            {schedule.group?.discipline?.teacher?.fullName}
+          </p>
+        )}
       </div>
     </div>
   );

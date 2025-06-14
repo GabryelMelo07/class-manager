@@ -7,6 +7,8 @@ import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/context/ThemeContext';
 import NotFound from '@/pages/NotFound';
 import { RefreshDataProvider } from '@/context/RefreshDataContext';
+import ExportSchedules from '@/pages/ExportSchedules';
+import ExportTeachersSchedules from '@/pages/ExportTeacherSchedules';
 
 export function App() {
   return (
@@ -32,10 +34,24 @@ export function App() {
               <Route
                 path="/"
                 element={
-                  <PrivateRoute
-                    allowedRoles={['ADMIN', 'COORDENADOR', 'PROFESSOR']}
-                  >
+                  <PrivateRoute>
                     <Home />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/export-schedules"
+                element={
+                  <PrivateRoute>
+                    <ExportSchedules />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/export-schedules-by-teacher"
+                element={
+                  <PrivateRoute>
+                    <ExportTeachersSchedules />
                   </PrivateRoute>
                 }
               />

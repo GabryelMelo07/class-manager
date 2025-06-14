@@ -33,7 +33,7 @@ import GroupForm from '@/components/forms/group-form';
 import { DynamicModal } from '@/components/dynamic-modal';
 import { CustomCheckboxGroup } from '@/components/custom-checkbox-group';
 import { UserTypeEnum } from '@/utils/UserTypeEnum';
-import { DAY_ORDER, formatTimeSlot, getColorClasses, getTranslatedErrorMessage } from '@/utils/Helpers';
+import { DAY_ORDER, formatTimeSlot, generateTimeSlots, getColorClasses, getTranslatedErrorMessage } from '@/utils/Helpers';
 import { useReactToPrint } from 'react-to-print';
 import ScheduleTable from '@/components/schedule-table';
 import { useRefreshDataContext } from '@/context/RefreshDataContext';
@@ -641,29 +641,6 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     }
   };
 
-  // Helper to generate time slots
-  const generateTimeSlots = (start: string, end: string, duration: number) => {
-    const normalizeTime = (time: string) => {
-      const parts = time.split(':');
-      return parts.length === 2 ? `${time}:00` : time;
-    };
-
-    const slots = [];
-    const startDate = new Date(`1970-01-01T${normalizeTime(start)}`);
-    const endDate = new Date(`1970-01-01T${normalizeTime(end)}`);
-
-    while (startDate < endDate) {
-      const endTime = new Date(startDate.getTime() + duration * 60000);
-      if (endTime > endDate) break;
-
-      const format = (date: Date) => date.toTimeString().slice(0, 5);
-      slots.push(`${format(startDate)}-${format(endTime)}`);
-      startDate.setTime(endTime.getTime());
-    }
-
-    return slots;
-  };
-
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: { distance: 3 },
@@ -688,7 +665,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
               {canManage && (
                 <Button
                   variant="link"
-                  className="text-indigo-600 dark:text-neutral-300 hover:text-indigo-700 cursor-pointer"
+                  className="text-primary dark:text-neutral-300 hover:text-[#44106e] cursor-pointer"
                   onClick={() => setIsGroupModalOpen(true)}
                 >
                   <Plus strokeWidth={2} />
@@ -869,7 +846,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
                   </Select>
                   <Button
                     onClick={handlePrint}
-                    className="bg-primary hover:bg-indigo-700"
+                    className="bg-primary hover:bg-[#5b1693]"
                   >
                     <Download strokeWidth={2} />
                     Exportar

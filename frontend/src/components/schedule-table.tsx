@@ -12,6 +12,7 @@ export default function ScheduleTable({
   onDeleteSchedule,
   timeSlotsError,
   scheduleTableRef,
+  showCourse = false
 }: {
   schedules: IScheduleItem[];
   droppable: boolean;
@@ -20,6 +21,7 @@ export default function ScheduleTable({
   onDeleteSchedule?: (id: number) => void;
   timeSlotsError: boolean;
   scheduleTableRef: React.RefObject<HTMLDivElement | null>;
+  showCourse?: boolean;
 }) {
   const sortedDays = Object.entries(daysMap).sort(([a], [b]) => {
     return DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b);
@@ -106,6 +108,7 @@ export default function ScheduleTable({
                           schedule={schedule}
                           draggable={droppable}
                           onDeleteSchedule={handleDeleteClick}
+                          showCourse={showCourse}
                         />
                       ))}
                     </TableCell>

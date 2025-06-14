@@ -27,7 +27,9 @@ import { DefaultFormProps } from '@/lib/types';
 import { SelectGroup } from '@radix-ui/react-select';
 import { Button } from '@/components/ui/button';
 import ColorSelector from '@/components/color-selector';
-import { requiredFieldMessage } from '@/utils/Helpers';
+import { requiredFieldMessage, usePagination } from '@/utils/Helpers';
+import { Loader2 } from 'lucide-react';
+import FormButtons from '@/components/forms/form-buttons';
 
 interface GroupFormProps extends DefaultFormProps {
   courseId?: number;
@@ -46,6 +48,9 @@ export default function GroupForm({
   const [classRooms, setClassRooms] = useState<{ id: number; name: string }[]>(
     []
   );
+
+  const disciplinesPagination = usePagination();
+  const classRoomsPagination = usePagination();
 
   const formSchema = z.object({
     name: z.string().min(1, { message: requiredFieldMessage }),
@@ -87,27 +92,59 @@ export default function GroupForm({
       if (isEditMode && initialData) {
         courseId = initialData.discipline?.course?.id;
       }
+      disciplinesPagination.setIsLoading(true);
 
-      const response = await api.get(`/api/v1/disciplines?courseId=${courseId}`);
-      setDisciplines(response.data.content || []);
+      const response = await api.get(
+        `/api/v1/disciplines?courseId=${courseId}&page=${disciplinesPagination.page}&size=20`
+      );
+
+      setDisciplines((prev) =>
+        disciplinesPagination.page === 0
+          ? response.data.content
+          : [...prev, ...response.data.content]
+      );
+
+      disciplinesPagination.setHasMore(
+        response.data.page.number + 1 < response.data.page.totalPages
+      );
     } catch (error) {
       console.error('Erro ao buscar disciplinas:', error);
+    } finally {
+      disciplinesPagination.setIsLoading(false);
     }
-  }, []);
+  }, [courseId, disciplinesPagination.page]);
 
   const fetchClassRooms = useCallback(async () => {
     try {
-      const response = await api.get('/api/v1/class-rooms');
-      setClassRooms(response.data.content || []);
+      classRoomsPagination.setIsLoading(true);
+
+      const response = await api.get(
+        `/api/v1/class-rooms?page=${classRoomsPagination.page}&size=20`
+      );
+
+      setClassRooms((prev) =>
+        classRoomsPagination.page === 0
+          ? response.data.content
+          : [...prev, ...response.data.content]
+      );
+
+      classRoomsPagination.setHasMore(
+        response.data.page.number + 1 < response.data.page.totalPages
+      );
     } catch (error) {
       console.error('Erro ao buscar salas de aula:', error);
+    } finally {
+      classRoomsPagination.setIsLoading(false);
     }
-  }, []);
+  }, [classRoomsPagination.page]);
 
   useEffect(() => {
     fetchDisciplines();
+  }, [fetchDisciplines]);
+
+  useEffect(() => {
     fetchClassRooms();
-  }, []);
+  }, [fetchClassRooms]);
 
   // Preencher formulário com dados iniciais quando em modo de edição
   useEffect(() => {
@@ -236,36 +273,56 @@ export default function GroupForm({
             control={form.control}
             name="disciplineId"
             render={({ field }) => (
-              <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
-                <FormLabel className="flex shrink-0">Disciplina</FormLabel>
-                <div className="w-full">
-                  <FormControl>
-                    <Select
-                      {...field}
-                      key="disciplineId"
-                      value={field.value?.toString()}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecione a disciplina da turma" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60 overflow-y-auto">
-                        <SelectGroup>
-                          {disciplines.map((discipline) => (
-                            <SelectItem
-                              key={discipline.id}
-                              value={discipline.id.toString()}
-                              className="hover:bg-accent hover:text-accent-foreground"
-                            >
-                              {discipline.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </div>
+              <FormItem className="col-span-12">
+                <FormLabel>Disciplina</FormLabel>
+                <FormControl>
+                  <Select
+                    {...field}
+                    value={field.value?.toString()}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione a disciplina da turma" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60 overflow-y-auto">
+                      <SelectGroup>
+                        {disciplines.map((discipline) => (
+                          <SelectItem
+                            key={discipline.id}
+                            value={discipline.id.toString()}
+                          >
+                            {discipline.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+
+                      {disciplinesPagination.hasMore && (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            disciplinesPagination.loadMore();
+                          }}
+                          disabled={disciplinesPagination.isLoading}
+                          variant="ghost"
+                          className="w-full"
+                        >
+                          {disciplinesPagination.isLoading ? (
+                            <>
+                              <Loader2
+                                strokeWidth={2}
+                                className="animate-spin"
+                              />{' '}
+                              Carregando...
+                            </>
+                          ) : (
+                            'Carregar mais'
+                          )}
+                        </Button>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -273,48 +330,58 @@ export default function GroupForm({
             control={form.control}
             name="classRoomId"
             render={({ field }) => (
-              <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
-                <FormLabel className="flex shrink-0">Sala de aula</FormLabel>
-                <div className="w-full">
-                  <FormControl>
-                    <Select
-                      {...field}
-                      key="classRoomId"
-                      value={field.value?.toString()}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecione a sala a ser usada" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60 overflow-y-auto">
-                        <SelectGroup>
-                          {classRooms.map((classRoom) => (
-                            <SelectItem
-                              key={classRoom.id}
-                              value={classRoom.id.toString()}
-                              className="hover:bg-accent hover:text-accent-foreground"
-                            >
-                              {classRoom.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+              <FormItem className="col-span-12">
+                <FormLabel>Sala de aula</FormLabel>
+                <FormControl>
+                  <Select
+                    {...field}
+                    value={field.value?.toString()}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione a sala a ser usada" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60 overflow-y-auto">
+                      <SelectGroup>
+                        {classRooms.map((classRoom) => (
+                          <SelectItem
+                            key={classRoom.id}
+                            value={classRoom.id.toString()}
+                          >
+                            {classRoom.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
 
-                  <FormMessage />
-                </div>
+                      {classRoomsPagination.hasMore && (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            classRoomsPagination.loadMore();
+                          }}
+                          disabled={classRoomsPagination.isLoading}
+                          variant="ghost"
+                          className="w-full"
+                        >
+                          {classRoomsPagination.isLoading ? (
+                            <>
+                              <Loader2 className="animate-spin" /> Carregando...
+                            </>
+                          ) : (
+                            'Carregar mais'
+                          )}
+                        </Button>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
         </div>
 
-        <div className="flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button type="submit">Salvar</Button>
-        </div>
+        <FormButtons onCancel={onCancel} isEditMode={isEditMode} />
       </form>
     </Form>
   );

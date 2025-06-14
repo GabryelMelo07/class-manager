@@ -14,7 +14,7 @@ export default function FormButtons({
   return (
     <div className="flex justify-end space-x-2">
       <Button
-        className="cursor-pointer"
+        className="cursor-pointer hover:text-secondary-foreground"
         type="button"
         variant="outline"
         onClick={onCancel}
