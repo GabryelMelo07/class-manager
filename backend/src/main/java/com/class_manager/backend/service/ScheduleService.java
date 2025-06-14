@@ -2,12 +2,14 @@ package com.class_manager.backend.service;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.class_manager.backend.dto.model.schedule.CopySchedulesDto;
 import com.class_manager.backend.dto.model.schedule.ScheduleDto;
 import com.class_manager.backend.exceptions.InvalidScheduleException;
 import com.class_manager.backend.model.ClassRoom;
@@ -74,6 +76,26 @@ public class ScheduleService {
 		
 		schedule.setEndTime(getScheduleEndTimeFromLessonDuration(schedule));
 		return validateAndSave(schedule);
+	}
+
+	public List<Schedule> copySchedulesBySemesterAndCourse(CopySchedulesDto dto) {
+		List<Schedule> schedulesToOverride = scheduleRepository.findSchedulesBySemesterAndCourse(dto.toSemesterId(), dto.courseId());
+
+		for (Schedule schedule : schedulesToOverride) {
+			scheduleRepository.delete(schedule);
+		}
+		
+		List<Schedule> schedulesToBeCopied = scheduleRepository.findSchedulesBySemesterAndCourse(dto.fromSemesterId(), dto.courseId());
+		List<Schedule> copiedSchedules = new ArrayList<>();
+		Semester semester = semesterService.findAndValidateSemesterById(dto.toSemesterId());
+		
+		for (Schedule fromSchedule : schedulesToBeCopied) {
+			Schedule toSchedule = new Schedule(fromSchedule);
+			toSchedule.setSemester(semester);
+			copiedSchedules.add(validateAndSave(toSchedule));
+		}
+
+		return copiedSchedules;
 	}
 
 	public void deleteById(Long id) {

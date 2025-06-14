@@ -15,8 +15,8 @@ import java.util.UUID;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
-    Optional<User> findByEmail(String email);
+	Optional<User> findByEmail(String email);
 
 	@Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :role")
-    Page<User> findByRole(@Param("role") RoleName role, Pageable pageable);
+	Page<User> findByRole(@Param("role") RoleName role, Pageable pageable);
 }

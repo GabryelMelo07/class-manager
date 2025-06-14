@@ -33,7 +33,7 @@ public class UserController {
 	public ResponseEntity<Page<UserResponseDto>> findAllTeachers(Pageable pageable) {
 		return ResponseEntity.ok(userService.findAllTeachers(pageable));
 	}
-	
+
 	@GetMapping("/coordinators")
 	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
 	public ResponseEntity<Page<UserResponseDto>> findAllCoordinators(Pageable pageable) {

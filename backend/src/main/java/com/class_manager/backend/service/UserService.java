@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.class_manager.backend.dto.AppConfigProperties;
@@ -86,6 +87,7 @@ public class UserService {
 		this.frontEndUrl = this.appConfigProperties.frontend().url();
 	}
 
+	@Transactional
 	public void register(CreateUserDto dto) {
 		var existentUser = userRepository.findByEmail(dto.email());
 

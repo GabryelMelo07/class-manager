@@ -21,6 +21,7 @@ import com.class_manager.backend.exceptions.ResetPasswordTokenInvalidException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
+import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -96,6 +97,11 @@ public class ExceptionHandlerController extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(InvalidScheduleException.class)
 	private ResponseEntity<RestErrorMessage> invalidScheduleExceptionHandler(InvalidScheduleException exception) {
 		return buildResponse(HttpStatus.CONFLICT, exception.getMessage(), exception);
+	}
+
+	@ExceptionHandler(MessagingException.class)
+	private ResponseEntity<RestErrorMessage> messagingExceptionHandler(MessagingException exception) {
+		return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error trying to send email async", exception);
 	}
 
 	@ExceptionHandler(Exception.class)
