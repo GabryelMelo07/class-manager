@@ -36,9 +36,9 @@ export default function ScheduleTable({
   return (
     <div
       ref={scheduleTableRef}
-      className="overflow-x-visible print:p-4 print:bg-white"
+      className="overflow-x-auto print:p-4 print:bg-white"
     >
-      <table className="w-full table-fixed print:w-full">
+      <table className="w-full table-fixed min-w-[800px] print:w-full">
         <thead>
           {!timeSlotsError && (
             <tr className="border-b">
@@ -48,7 +48,7 @@ export default function ScheduleTable({
               {sortedDays.map(([apiDay, ptDay]) => (
                 <th
                   key={apiDay}
-                  className="py-3 text-center font-medium text-gray-500 min-w-[200px] dark:text-gray-300"
+                  className="py-4 text-center sm:text-sm font-medium text-gray-500 min-w-[200px] dark:text-gray-300"
                 >
                   {ptDay}
                 </th>

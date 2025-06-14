@@ -657,11 +657,12 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
-          <div className="border lg:col-span-1 bg-card rounded-xl shadow-md p-6 max-h-[85vh] flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Meus Cursos</h2>
+          <div className="xl:col-span-1 bg-card rounded-xl shadow-md p-4 max-h-[85vh] flex flex-col">
+
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold">Meus Cursos</h2>
               {canManage && (
                 <Button
                   variant="link"
@@ -756,12 +757,12 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           </div>
 
           {/* Schedule Grid */}
-          <div className="lg:col-span-3 border bg-card rounded-xl shadow-md overflow-hidden">
-            <div className="p-6 border-b">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Horário</h2>
+          <div className="xl:col-span-3 border bg-card rounded-xl shadow-md overflow-hidden">
+            <div className="p-4 border-b">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                <h2 className="text-lg font-bold">Horário</h2>
 
-                <div className="flex space-x-3">
+                <div className="flex flex-wrap gap-2">
                   <Select
                     onValueChange={handleSemesterChange}
                     value={selectedSemester?.id?.toString() || ''}
@@ -861,6 +862,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
                   }))}
                   selectedValues={selectedCustomCheckboxSemesters}
                   onChange={setSelectedCustomCheckboxSemesters}
+                  className="flex-nowrap overflow-x-auto pb-1"
                 />
               </div>
             </div>

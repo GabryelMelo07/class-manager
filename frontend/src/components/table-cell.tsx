@@ -14,8 +14,8 @@ export function TableCell({
   return (
     <td
       ref={setNodeRef}
-      className={`p-2 min-h-16 ${
-        isOver ? 'bg-indigo-50' : ''
+      className={`p-1 min-h-16 ${
+        isOver ? 'bg-[#faf5ff]' : ''
       } transition-colors`}
     >
       {children}
