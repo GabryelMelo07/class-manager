@@ -1,8 +1,13 @@
 # Build do frontend
-FROM node:22.6.0 as frontend-builder
+FROM node:lts as frontend-builder
 WORKDIR /app
 COPY frontend/ .
-RUN npm install && npm run build
+
+# Solução para o bug do Rollup:
+RUN npm install -g npm@latest && \
+    rm -rf node_modules package-lock.json && \
+    npm install --force && \
+    npm run build
 
 # Build do backend
 FROM maven:3.9-eclipse-temurin-23 as backend-builder
