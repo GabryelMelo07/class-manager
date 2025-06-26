@@ -64,6 +64,11 @@
       "name": "front-end.url",
       "type": "java.lang.String",
       "description": "Base URL of the front-end application, used for redirects, CORS, or other integrations between backend and frontend."
+    },
+    {
+      "name": "health.check.api.key",
+      "type": "java.lang.String",
+      "description": "API Key to authenticate health check requests."
     }
   ]
 }
