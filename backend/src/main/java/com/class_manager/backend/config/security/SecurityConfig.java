@@ -2,7 +2,6 @@ package com.class_manager.backend.config.security;
 
 import com.class_manager.backend.config.security.validators.ScopeValidator;
 import com.class_manager.backend.config.security.validators.SubjectValidator;
-import com.class_manager.backend.dto.AppConfigProperties;
 
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -42,7 +41,7 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-	private final String issuer;
+	private final String apiIssuer;
 	private final RSAPublicKey publicKey;
 	private final RSAPrivateKey privateKey;
 	private final ScopeValidator scopeValidator;
@@ -51,12 +50,12 @@ public class SecurityConfig {
 	public SecurityConfig(
 			@Value("${jwt.public.key}") RSAPublicKey publicKey,
 			@Value("${jwt.private.key}") RSAPrivateKey privateKey,
+			@Value("${api.issuer}") String apiIssuer,
 			SubjectValidator subjectValidator,
-			ScopeValidator scopeValidator,
-			AppConfigProperties appConfigProperties) {
-		this.issuer = appConfigProperties.api().url();
+			ScopeValidator scopeValidator) {
 		this.publicKey = publicKey;
 		this.privateKey = privateKey;
+		this.apiIssuer = apiIssuer;
 		this.subjectValidator = subjectValidator;
 		this.scopeValidator = scopeValidator;
 	}
@@ -80,31 +79,31 @@ public class SecurityConfig {
 	}
 
 	private JwtDecoder buildJwtDecoder(List<OAuth2TokenValidator<Jwt>> validators) {
-        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(publicKey).build();
-        OAuth2TokenValidator<Jwt> combinedValidators = new DelegatingOAuth2TokenValidator<>(validators);
-        jwtDecoder.setJwtValidator(combinedValidators);
-        return jwtDecoder;
-    }
+		NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(publicKey).build();
+		OAuth2TokenValidator<Jwt> combinedValidators = new DelegatingOAuth2TokenValidator<>(validators);
+		jwtDecoder.setJwtValidator(combinedValidators);
+		return jwtDecoder;
+	}
 
 	@Bean
-    @Primary
-    JwtDecoder jwtDecoder() {
-        List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();
-        validators.add(JwtValidators.createDefaultWithIssuer(issuer));
-        validators.add(scopeValidator);
-        validators.add(subjectValidator);
-        return buildJwtDecoder(validators);
-    }
+	@Primary
+	JwtDecoder jwtDecoder() {
+		List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();
+		validators.add(JwtValidators.createDefaultWithIssuer(apiIssuer));
+		validators.add(scopeValidator);
+		validators.add(subjectValidator);
+		return buildJwtDecoder(validators);
+	}
 
 	@Bean
-    @Qualifier("noExpiresAtValidatorJwtDecoder")
-    JwtDecoder noExpiresAtValidatorJwtDecoder() {
-        List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();
-        validators.add(new JwtIssuerValidator(issuer));
-        validators.add(scopeValidator);
-        validators.add(subjectValidator);
-        return buildJwtDecoder(validators);
-    }
+	@Qualifier("noExpiresAtValidatorJwtDecoder")
+	JwtDecoder noExpiresAtValidatorJwtDecoder() {
+		List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();
+		validators.add(new JwtIssuerValidator(apiIssuer));
+		validators.add(scopeValidator);
+		validators.add(subjectValidator);
+		return buildJwtDecoder(validators);
+	}
 
 	@Bean
 	JwtEncoder jwtEncoder() {

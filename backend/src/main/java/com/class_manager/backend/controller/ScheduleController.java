@@ -1,6 +1,8 @@
 package com.class_manager.backend.controller;
 
 import com.class_manager.backend.dto.model.schedule.CopySchedulesDto;
+import com.class_manager.backend.dto.model.schedule.GenerateSchedulesDto;
+import com.class_manager.backend.dto.model.schedule.GenerateSchedulesResponseDto;
 import com.class_manager.backend.dto.model.schedule.ScheduleDto;
 import com.class_manager.backend.model.Schedule;
 import com.class_manager.backend.service.ScheduleService;
@@ -47,8 +49,14 @@ public class ScheduleController {
 
 	@PostMapping("/copy-schedules")
 	@PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_COORDINATOR')")
-	public ResponseEntity<List<Schedule>> save(@RequestBody CopySchedulesDto dto) {
+	public ResponseEntity<List<Schedule>> copySchedules(@RequestBody CopySchedulesDto dto) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(scheduleService.copySchedulesBySemesterAndCourse(dto));
 	}
 
+	@PostMapping("/generate-schedules")
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_COORDINATOR')")
+	public ResponseEntity<GenerateSchedulesResponseDto> generateSchedules(@RequestBody GenerateSchedulesDto dto) {
+		return ResponseEntity.status(HttpStatus.CREATED).body(scheduleService.generateSchedulesForCourseAndSemester(dto));
+	}
+	
 }

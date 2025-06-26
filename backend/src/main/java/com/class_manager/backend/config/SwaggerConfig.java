@@ -6,12 +6,10 @@ import java.util.Set;
 
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-
-import com.class_manager.backend.dto.AppConfigProperties;
-import com.class_manager.backend.dto.config_properties.Api;
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
@@ -31,19 +29,21 @@ import io.swagger.v3.oas.models.servers.Server;
 @SecurityScheme(name = "bearerAuth", type = SecuritySchemeType.HTTP, bearerFormat = "JWT", scheme = "bearer")
 public class SwaggerConfig {
 
-	private final Api apiProperties;
+	private final String apiIssuer;
 	private final Boolean swaggerTryItOutDisabled;
 
-	public SwaggerConfig(AppConfigProperties appConfigProperties) {
-		this.swaggerTryItOutDisabled = appConfigProperties.swaggerTryItOutDisabled();
-		this.apiProperties = appConfigProperties.api();
+	public SwaggerConfig(
+			@Value("${api.issuer}") String apiIssuer,
+			@Value("${swagger.tryitout.enabled}") Boolean swaggerTryItOutEnabled) {
+		this.apiIssuer = apiIssuer;
+		this.swaggerTryItOutDisabled = swaggerTryItOutEnabled;
 	}
 
 	@Bean
 	OpenAPI customOpenApi() {
 		return new OpenAPI()
 				.servers(Arrays.asList(
-						new Server().url(apiProperties.url()).description("Servidor de Produção"),
+						new Server().url(apiIssuer).description("Servidor de Produção"),
 						new Server().url("http://localhost:8080").description("Servidor Local")))
 				.components(new Components().addSecuritySchemes("bearerAuth",
 						new io.swagger.v3.oas.models.security.SecurityScheme()
@@ -51,10 +51,10 @@ public class SwaggerConfig {
 								.bearerFormat("JWT")))
 				.addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
 				.info(new Info()
-						.title(apiProperties.title())
-						.version(apiProperties.version())
-						.description(apiProperties.description())
-						.termsOfService(apiProperties.termsOfService())
+						.title("Class Manager API")
+						.version("1.0.0")
+						.description("API to generate and adjust university curriculum schedules")
+						.termsOfService("")
 						.license(new License().name("MIT License")
 								.url("https://github.com/GabryelMelo07/class-manager/blob/master/LICENSE")));
 	}

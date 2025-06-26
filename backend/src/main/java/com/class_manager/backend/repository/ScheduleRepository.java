@@ -89,4 +89,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 		@Param("endTime") LocalTime endTime,
 		@Param("excludeId") Long excludeId
 	);
+
+	List<Schedule> findByGroupId(Long groupId);
 }

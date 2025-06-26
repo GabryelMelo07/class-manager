@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.class_manager.backend.dto.AppConfigProperties;
 import com.class_manager.backend.dto.EmailDto;
 import com.class_manager.backend.dto.auth.CreateUserDto;
 import com.class_manager.backend.dto.auth.LoginRequestDto;
@@ -60,9 +60,8 @@ public class UserService {
 	private final PasswordResetTokenRepository passwordResetTokenRepository;
 	private final EmailService emailService;
 
-	private final String issuer;
+	private final String apiIssuer;
 	private final String frontEndUrl;
-	private final AppConfigProperties appConfigProperties;
 
 	public UserService(
 			JwtUtils jwtUtils,
@@ -73,7 +72,8 @@ public class UserService {
 			RoleRepository roleRepository,
 			PasswordResetTokenRepository passwordResetTokenRepository,
 			EmailService emailService,
-			AppConfigProperties appConfigProperties) {
+			@Value("${api.issuer}") String apiIssuer,
+			@Value("${front-end.url}") String frontEndUrl) {
 		this.jwtUtils = jwtUtils;
 		this.jwtDecoder = jwtDecoder;
 		this.noExpiresAtValidatorJwtDecoder = noExpiresAtValidatorJwtDecoder;
@@ -82,9 +82,8 @@ public class UserService {
 		this.roleRepository = roleRepository;
 		this.passwordResetTokenRepository = passwordResetTokenRepository;
 		this.emailService = emailService;
-		this.appConfigProperties = appConfigProperties;
-		this.issuer = this.appConfigProperties.api().url();
-		this.frontEndUrl = this.appConfigProperties.frontend().url();
+		this.apiIssuer = apiIssuer;
+		this.frontEndUrl = frontEndUrl;
 	}
 
 	@Transactional
@@ -146,9 +145,9 @@ public class UserService {
 		User usuario = user.get();
 		String userId = usuario.getId().toString();
 
-		var accessToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(1, ChronoUnit.HOURS),
+		var accessToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(1, ChronoUnit.HOURS),
 				usuario);
-		var refreshToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(3, ChronoUnit.DAYS),
+		var refreshToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(3, ChronoUnit.DAYS),
 				usuario);
 
 		return new LoginResponseDto(accessToken, refreshToken);
@@ -163,12 +162,10 @@ public class UserService {
 		String token = operationToken + "_" + expiresAt.toString();
 
 		String resetPassUrl = String.format("%s/reset-password?token=%s", frontEndUrl, token);
-		String institutionName = appConfigProperties.institution().name();
-		String body = new EmailTemplate(appConfigProperties.emailTemplateProperties(), institutionName)
-				.getResetPasswordTemplate(user.getName(), resetPassUrl);
+		String body = EmailTemplate.getResetPasswordTemplate(user.getName(), resetPassUrl);
 
 		try {
-			String emailSubject = "Solicitação de redefinição de senha - %s".formatted(institutionName);
+			String emailSubject = "Solicitação de redefinição de senha - Class Manager";
 			emailService.sendEmailAsync(
 					new EmailDto(email, emailSubject, body));
 		} catch (MessagingException e) {
@@ -204,9 +201,9 @@ public class UserService {
 				.orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado."));
 		String userId = usuario.getId().toString();
 
-		var newAccessToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(1, ChronoUnit.HOURS),
+		var newAccessToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(1, ChronoUnit.HOURS),
 				usuario);
-		var newRefreshToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(3, ChronoUnit.DAYS),
+		var newRefreshToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(3, ChronoUnit.DAYS),
 				usuario);
 		return new LoginResponseDto(newAccessToken, newRefreshToken);
 	}

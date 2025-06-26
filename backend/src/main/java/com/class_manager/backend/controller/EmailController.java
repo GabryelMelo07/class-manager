@@ -21,7 +21,7 @@ public class EmailController {
 
 	private final EmailService emailService;
 
-	@PostMapping("/register")
+	@PostMapping("/send-schedules-pdf")
 	@PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_COORDINATOR')")
 	public ResponseEntity<Void> sendEmail(@RequestBody EmailDto dto) throws MessagingException {
 		emailService.sendEmailAsync(dto);

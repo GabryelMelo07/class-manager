@@ -21,6 +21,12 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 	Page<Group> findAllByCourse(@Param("courseId") Long courseId, Pageable pageable);
 
 	@Query("""
+			SELECT g FROM Group g
+				WHERE g.active = true AND g.discipline.course.id = :courseId
+			""")
+	List<Group> findAllByCourse(@Param("courseId") Long courseId);
+
+	@Query("""
 			SELECT DISTINCT g.semesterOfCourse FROM Group g 
 				WHERE g.semesterOfCourse IS NOT NULL AND g.discipline.course.id = :courseId ORDER BY g.semesterOfCourse
 			""")

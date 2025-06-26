@@ -5,13 +5,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import com.class_manager.backend.dto.AppConfigProperties;
-import com.class_manager.backend.dto.config_properties.InitialAdminUser;
 import com.class_manager.backend.enums.RoleName;
 import com.class_manager.backend.model.Role;
 import com.class_manager.backend.model.User;
@@ -24,20 +23,33 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class DataInitializer implements ApplicationRunner {
 
-	private final AppConfigProperties appConfigProperties;
 	private final BCryptPasswordEncoder passwordEncoder;
 	private final RoleRepository roleRepository;
 	private final UserRepository userRepository;
 
+	private final Boolean generateInitialAdminUser;
+	private final String adminPassword;
+	private final String adminEmail;
+	private final String adminName;
+	private final String adminSurname;
+
 	public DataInitializer(
-			AppConfigProperties appConfigProperties,
 			BCryptPasswordEncoder passwordEncoder,
 			RoleRepository roleRepository,
-			UserRepository userRepository) {
-		this.appConfigProperties = appConfigProperties;
+			UserRepository userRepository,
+			@Value("${generate.admin.user}") Boolean generateInitialAdminUser,
+			@Value("${admin.config.password}") String adminPassword,
+			@Value("${admin.config.email}") String adminEmail,
+			@Value("${admin.config.name}") String adminName,
+			@Value("${admin.config.surname}") String adminSurname) {
 		this.passwordEncoder = passwordEncoder;
 		this.roleRepository = roleRepository;
 		this.userRepository = userRepository;
+		this.generateInitialAdminUser = generateInitialAdminUser;
+		this.adminPassword = adminPassword;
+		this.adminEmail = adminEmail;
+		this.adminName = adminName;
+		this.adminSurname = adminSurname;
 	}
 
 	/**
@@ -89,24 +101,27 @@ public class DataInitializer implements ApplicationRunner {
 	 */
 	void createInitialAdminUser() {
 		try {
+			if (!generateInitialAdminUser) {
+				log.info("Skipping creation of initial admin user as per configuration");
+				return;
+			}
+			
 			log.info("Creating initial admin user");
 
-			InitialAdminUser initialAdminUser = appConfigProperties.initialAdminUser();
-
-			if (userRepository.findByEmail(initialAdminUser.email()).isPresent()) {
+			if (userRepository.findByEmail(adminEmail).isPresent()) {
 				log.info("Initial admin user already exists, skipping creation");
 				return;
 			}
 
 			Role role = roleRepository.findByName(RoleName.ADMIN)
-				.orElseThrow(() -> new IllegalStateException("Access profile " + RoleName.ADMIN
-						+ " not found in the database. Unable to create the initial user."));
+					.orElseThrow(() -> new IllegalStateException("Access profile " + RoleName.ADMIN
+							+ " not found in the database. Unable to create the initial user."));
 
 			User user = new User();
-			user.setEmail(initialAdminUser.email());
-			user.setPassword(passwordEncoder.encode(initialAdminUser.password()));
-			user.setName(initialAdminUser.name());
-			user.setSurname(initialAdminUser.surname());
+			user.setEmail(adminEmail);
+			user.setPassword(passwordEncoder.encode(adminPassword));
+			user.setName(adminName);
+			user.setSurname(adminSurname);
 			user.setRoles(Set.of(role));
 
 			userRepository.save(user);
