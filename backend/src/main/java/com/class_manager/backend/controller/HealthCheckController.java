@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1/health-check")
 public class HealthCheckController {
 
     private final String apiKey;
@@ -21,7 +21,7 @@ public class HealthCheckController {
 		this.apiKey = apiKey;
 	}
 
-    @GetMapping("/health-check")
+    @GetMapping
     public ResponseEntity<String> healthCheck(@RequestHeader("x-api-key") String key) {
 		log.info("Health check request received");
 		
