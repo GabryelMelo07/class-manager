@@ -1,14 +1,16 @@
 import { UserTypeEnum } from '@/utils/UserTypeEnum';
-import { Header } from '../header';
+import { Header } from '@/components/header';
+import { ScheduleView } from '@/components/views/ScheduleView';
 
 export function CoordinatorView() {
-  // TODO: Criar a lógica de exibição para o Coordinator, pode mexer nos horários dos cursos em que é coordenador e cadastrar novas disciplinas neles.
+  const userType = UserTypeEnum.COORDINATOR;
 
   return (
-    <div>
-      <Header userType={UserTypeEnum.COORDINATOR} />
-      <h1>Coordinator View</h1>
-      <p>Welcome to the Coordinator view!</p>
+    <div className="min-h-screen">
+      <Header userType={userType} />
+      <main className="container mx-auto px-4 py-8">
+        <ScheduleView userType={userType} />
+      </main>
     </div>
   );
 }

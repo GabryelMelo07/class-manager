@@ -9,5 +9,6 @@ import com.class_manager.backend.model.Discipline;
 
 @Repository
 public interface DisciplineRepository extends JpaRepository<Discipline, Long> {
-	Page<Discipline> findByCourseId(Long courseId, Pageable pageable);
+	Page<Discipline> findByCourseIdAndActiveTrue(Long courseId, Pageable pageable);
+	Page<Discipline> findByActiveTrue(Pageable pageable);
 }

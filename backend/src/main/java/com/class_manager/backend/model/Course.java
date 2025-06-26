@@ -1,12 +1,10 @@
 package com.class_manager.backend.model;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.class_manager.backend.dto.model.course.CourseDto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -31,24 +29,29 @@ public class Course {
 
 	@Column(nullable = false, unique = true)
     private String name;
+	
+	@Column(nullable = false, length = 10)
+	private String abbreviation;
+
+	@Column(nullable = false)
+	private Boolean active = true;
 
 	@OneToOne
     @JoinColumn(name = "coordinator_id", unique = true)
     @JsonIgnoreProperties({"coordinatedCourse", "teachingCourses", "disciplines", "roles"})
     private User coordinator;
 
-	@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "course")
 	@JsonIgnoreProperties({"course"})
 	private List<Discipline> disciplines;
 
-	@OneToOne(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-	// @JsonIgnoreProperties("timeSlot")
+	@OneToOne(mappedBy = "course")
+	@JsonIgnoreProperties({"course"})
 	private TimeSlot timeSlot;
 
-	public Course(CourseDto createCourseDto) {
-		this.name = createCourseDto.name();
-		this.coordinator = null;
-		this.disciplines = new ArrayList<>();
+	public Course(CourseDto dto) {
+		this.name = dto.name();
+		this.abbreviation = dto.abbreviation();
 	}
 	
 }

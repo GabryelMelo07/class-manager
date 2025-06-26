@@ -1,64 +1,83 @@
 package com.class_manager.backend.service;
 
-import java.util.Optional;
+import java.time.LocalDate;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.class_manager.backend.dto.model.semester.SemesterDto;
 import com.class_manager.backend.enums.SemesterStatus;
+import com.class_manager.backend.exceptions.InvalidScheduleException;
 import com.class_manager.backend.model.Semester;
 import com.class_manager.backend.repository.SemesterRepository;
-import com.class_manager.backend.utils.SemesterUtils;
+import com.class_manager.backend.utils.Patcher;
 
-import static com.class_manager.backend.model.Semester.createCurrentSemester;
-
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SemesterService {
 
 	private final SemesterRepository semesterRepository;
 
-	public SemesterService(SemesterRepository semesterRepository) {
-		this.semesterRepository = semesterRepository;
+	public Page<Semester> findAll(Pageable pageable) {
+		return semesterRepository.findAllOrderByStatusActive(pageable);
 	}
 
-	private Optional<Semester> findCurrentSemester() {
-		int year = SemesterUtils.getCurrentYear();
-		int semesterNumber = SemesterUtils.getCurrentSemesterNumber();
-		return semesterRepository.findCurrentSemester(year, semesterNumber);
-	}
+	public Semester findAndValidateSemesterById(Long id) {
+		Semester semester = semesterRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("Semester not found with id: " + id));
 
-	private void finalizeSemester() {
-		Optional<Semester> optionalSemester = semesterRepository.findActiveSemester();
+		if (semester.getStatus() != SemesterStatus.ACTIVE) {
+			throw new InvalidScheduleException("Cannot create schedule for a finalized semester");
+		}
 
-		if (optionalSemester.isPresent()) {
-			Semester semester = optionalSemester.get();
+		if (semester.getEndDate().isBefore(LocalDate.now())) {
 			semester.setStatus(SemesterStatus.FINALIZED);
 			semesterRepository.save(semester);
+			throw new InvalidScheduleException("Cannot create schedule for a finalized semester");
 		}
+
+		return semester;
 	}
 
-	public Semester getCurrentSemester() {
-		Optional<Semester> currentSemester = findCurrentSemester();
-
-		if (currentSemester.isPresent()) {
-			log.info("Current semester already exists: {}", currentSemester.get());
-			return currentSemester.get();
-		}
-
-		log.info("Finalizing previous semester if exists");
-		finalizeSemester();
-		
-		log.info("Actual semester did not exist yet, creating new current semester");
-		Semester semester = createCurrentSemester();
+	private Semester save(Semester semester) {
 		return semesterRepository.save(semester);
 	}
 
-	public Page<Semester> findAll(Pageable pageable) {
-		return semesterRepository.findAll(pageable);
+	public Semester save(SemesterDto dto) {
+		Semester semester = new Semester(dto);
+		return save(semester);
 	}
 
+	public Semester patch(Long semesterId, SemesterDto semesterDto) {
+		Semester existingSemester = semesterRepository.findById(semesterId)
+				.orElseThrow(() -> new EntityNotFoundException("Semester not found."));
+
+		if (existingSemester.getActive() == false) {
+			throw new RuntimeException("Failed to patch Semester");
+		}
+				
+		Semester partialSemester = new Semester(semesterDto);
+
+		try {
+			Patcher.patch(existingSemester, partialSemester);
+			return semesterRepository.save(existingSemester);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to patch Semester", e);
+		}
+	}
+
+	public void deleteSoft(Long id) {
+		Semester semester = semesterRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("Semester not found."));
+
+		semester.setActive(false);
+		semesterRepository.save(semester);
+	}
+	
 }

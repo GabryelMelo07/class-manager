@@ -9,6 +9,61 @@
       "name": "jwt.public.key",
       "type": "java.lang.String",
       "description": "A public RSA Key to decode JWT Tokens."
+    },
+    {
+      "name": "generate.admin.user",
+      "type": "java.lang.String",
+      "description": "A boolean value to define if the admin user will be generated automatically"
+    },
+    {
+      "name": "admin.config.password",
+      "type": "java.lang.String",
+      "description": "Password to create the first admin user when the application starts."
+    },
+    {
+      "name": "admin.config.name",
+      "type": "java.lang.String",
+      "description": "A name for admin user."
+    },
+    {
+      "name": "admin.config.surname",
+      "type": "java.lang.String",
+      "description": "A surname for admin user."
+    },
+    {
+      "name": "admin.config.email",
+      "type": "java.lang.String",
+      "description": "An email to admin user."
+    },
+    {
+      "name": "api.issuer",
+      "type": "java.lang.String",
+      "description": "The link (URL) of the backend APIs (issuer of token JWT)."
+    },
+    {
+      "name": "cors.allowed.origins",
+      "type": "java.lang.String",
+      "description": "Comma-separated list of allowed origins (URLs) that can access the backend APIs via CORS."
+    },
+    {
+      "name": "cors.allowed.methods",
+      "type": "java.lang.String",
+      "description": "Comma-separated list of HTTP methods (e.g., GET, POST, PUT) allowed for CORS requests."
+    },
+    {
+      "name": "cors.allowed.headers",
+      "type": "java.lang.String",
+      "description": "Comma-separated list of HTTP headers that are permitted in CORS requests."
+    },
+    {
+      "name": "swagger.tryitout.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Indicates whether the Swagger UI 'Try it out' feature is enabled for executing API requests directly from the documentation."
+    },
+    {
+      "name": "front-end.url",
+      "type": "java.lang.String",
+      "description": "Base URL of the front-end application, used for redirects, CORS, or other integrations between backend and frontend."
     }
   ]
 }

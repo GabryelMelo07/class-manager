@@ -1,10 +1,14 @@
 package com.class_manager.backend.model;
 
 import java.time.LocalDate;
+import java.util.List;
 
+import com.class_manager.backend.dto.model.semester.SemesterDto;
 import com.class_manager.backend.enums.SemesterStatus;
 import com.class_manager.backend.utils.SemesterUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,9 +16,11 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "semester",
@@ -23,6 +29,7 @@ import lombok.Data;
 	}
 )
 @Data
+@NoArgsConstructor
 public class Semester {
 
 	@Id
@@ -48,22 +55,25 @@ public class Semester {
     @Column(nullable = false)
     private SemesterStatus status;
 
-	public Semester() {
+	// Control to delete soft
+	@Column(nullable = false)
+	private Boolean active = true;
+
+	@OneToMany(mappedBy = "semester", orphanRemoval = true, cascade = CascadeType.REMOVE)
+	@JsonIgnore
+	private List<Schedule> schedules;
+
+	public Semester(SemesterDto dto) {
+		LocalDate startDate = dto.startDate();
+		int semesterNumber = SemesterUtils.getSemesterNumber(startDate.getMonthValue());
+		int yearNumber = startDate.getYear();
+
+        this.name = "SEMESTRE-" + yearNumber + "/" + semesterNumber;
+		this.status = SemesterStatus.ACTIVE;
+		this.startDate = SemesterUtils.getSemesterStartDate(yearNumber, semesterNumber);
+        this.endDate = SemesterUtils.getSemesterEndDate(yearNumber, semesterNumber);
+        this.year = yearNumber;
+        this.semester = semesterNumber;
 	}
-
-	public static Semester createCurrentSemester() {
-        int year = SemesterUtils.getCurrentYear();
-        int semesterNumber = SemesterUtils.getCurrentSemesterNumber();
-        
-        Semester semester = new Semester();
-        semester.name = "SEMESTRE-" + year + "/" + semesterNumber;
-		semester.status = SemesterStatus.ACTIVE;
-        semester.startDate = SemesterUtils.getSemesterStartDate(year, semesterNumber);
-        semester.endDate = SemesterUtils.getSemesterEndDate(year, semesterNumber);
-        semester.year = year;
-        semester.semester = semesterNumber;
-
-        return semester;
-    }
 
 }

@@ -10,7 +10,6 @@ import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  CalendarIcon,
   EyeIcon,
   EyeOffIcon,
   Loader2,
@@ -27,6 +26,7 @@ import {
 } from '@/components/ui/form';
 import { useState } from 'react';
 import { LoginBenefits } from '@/components/login-benefits';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   'email-input-0': z.string().min(1, { message: 'This field is required' }),
@@ -64,22 +64,24 @@ export function Login() {
       setAuthenticated(true);
       navigate('/');
     } catch (err) {
-      // TODO: TROCAR POR UM ALERT
-      alert('Credenciais inválidas.');
+      toast.error('Credenciais inválidas.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-indigo-600 text-white shadow-lg">
+      <header className="bg-primary text-white shadow-lg">
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <CalendarIcon className="h-6 w-6" />
-              <h1 className="text-2xl font-bold">Organizador Acadêmico</h1>
+              <img
+                className="w-[250px] h-max"
+                src="logo_horizontal_branco.png"
+                alt="Logo Class Manager"
+              />
             </div>
           </div>
         </div>
@@ -91,10 +93,10 @@ export function Login() {
         <div className="w-full md:w-1/2 p-8 flex items-center justify-center">
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-800">
+              <h2 className="text-3xl font-bold text-gray-800 dark:text-foreground">
                 Bem-vindo de volta!
               </h2>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 dark:text-foreground mt-2">
                 Acesse sua conta para gerenciar seus cursos e atividades
                 acadêmicas
               </p>
@@ -121,9 +123,6 @@ export function Login() {
                             type="email"
                             id="email-input-0"
                             className="pl-10"
-                            value={
-                              'admin@riogrande.ifrs.edu.br'
-                            } /* VALOR PADRÃO PARA FACILITAR O TESTE. TODO: REMOVER AO TERMINAR OS TESTES */
                           />
                         </div>
                       </FormControl>
@@ -148,9 +147,6 @@ export function Login() {
                             placeholder="Insira sua senha"
                             className="pl-10 pr-10"
                             id="password-input-0"
-                            value={
-                              'admin'
-                            } /* VALOR PADRÃO PARA FACILITAR O TESTE. TODO: REMOVER AO TERMINAR OS TESTES */
                           />
                           <Button
                             type="button"
@@ -161,9 +157,9 @@ export function Login() {
                             disabled={loading}
                           >
                             {showPassword ? (
-                              <EyeOffIcon className="h-4 w-4" />
+                              <EyeOffIcon className="size-4" />
                             ) : (
-                              <EyeIcon className="h-4 w-4" />
+                              <EyeIcon className="size-4" strokeWidth={2} />
                             )}
                           </Button>
                         </div>
@@ -175,7 +171,7 @@ export function Login() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700"
+                  className="w-full bg-primary hover:bg-[#5b1693]"
                   disabled={loading}
                 >
                   {loading ? (
@@ -193,35 +189,10 @@ export function Login() {
         </div>
 
         {/* Right Side - Benefits */}
-        <div className="hidden md:block md:w-1/2 bg-indigo-600">
+        <div className="hidden md:block md:w-1/2 bg-primary">
           <LoginBenefits />
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-white py-6 border-t">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-600 text-sm">
-              © 2023 Organizador Acadêmico. Todos os direitos reservados.
-            </p>
-            <div className="flex space-x-4 mt-4 md:mt-0">
-              <a
-                href="#"
-                className="text-gray-600 hover:text-indigo-600 text-sm"
-              >
-                Termos de Uso
-              </a>
-              <a
-                href="#"
-                className="text-gray-600 hover:text-indigo-600 text-sm"
-              >
-                Política de Privacidade
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

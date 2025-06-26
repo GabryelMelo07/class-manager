@@ -10,37 +10,39 @@ import com.class_manager.backend.repository.GroupRepository;
 import com.class_manager.backend.utils.Patcher;
 
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class GroupService {
 
 	private final GroupRepository groupRepository;
 	private final ClassRoomRepository classRoomRepository;
 	private final DisciplineRepository disciplineRepository;
-	private final SemesterService semesterService;
 
-	public GroupService(GroupRepository groupRepository, ClassRoomRepository classRoomRepository,
-			DisciplineRepository disciplineRepository, SemesterService semesterService) {
-		this.groupRepository = groupRepository;
-		this.classRoomRepository = classRoomRepository;
-		this.disciplineRepository = disciplineRepository;
-		this.semesterService = semesterService;
+	public Page<Group> findAllByCourse(Long courseId, Pageable pageable) {
+		return groupRepository.findAllByCourse(courseId, pageable);
 	}
 
 	public Page<Group> findAll(Pageable pageable) {
-		return groupRepository.findAll(pageable);
+		return groupRepository.findByActiveTrue(pageable);
 	}
 
 	public Optional<Group> findById(Long id) {
 		return groupRepository.findById(id);
+	}
+
+	public List<Integer> findAllSemestersOfCourse(Long courseId) {
+		return groupRepository.findAllDistinctSemestersOrdered(courseId);
 	}
 
 	public Group save(GroupDto dto) {
@@ -56,16 +58,19 @@ public class GroupService {
 
 		newGroup.setDiscipline(discipline);
 		newGroup.setClassRoom(classRoom);
-		newGroup.setSemester(semesterService.getCurrentSemester());
 
 		return groupRepository.save(newGroup);
 	}
 
 	public Group patch(Long groupId, GroupDto groupDto) {
-		Group partialGroup = new Group(groupDto);
-
 		Group existingGroup = groupRepository.findById(groupId)
 				.orElseThrow(() -> new EntityNotFoundException("Group not found with id: " + groupId));
+		
+		if (existingGroup.getActive() == false) {
+			throw new RuntimeException("Failed to patch Group");
+		}
+				
+		Group partialGroup = new Group(groupDto);
 
 		if (groupDto.disciplineId() != null) {
 			Discipline discipline = disciplineRepository.findById(groupDto.disciplineId())
@@ -91,8 +96,12 @@ public class GroupService {
 		}
 	}
 
-	public void deleteById(Long id) {
-		groupRepository.deleteById(id);
+	public void deleteSoft(Long id) {
+		Group group = groupRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("Group not found."));
+		
+		group.setActive(false);
+		groupRepository.save(group);
 	}
 
 }

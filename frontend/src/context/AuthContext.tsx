@@ -1,13 +1,21 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getAccessToken, getUserScope } from '@/lib/auth'
-import { AuthContextProps } from '@/lib/types'
+import { clearTokens, getAccessToken, getUserScope } from '@/lib/auth'
+
+interface AuthContextProps {
+  isAuthenticated: boolean
+  setAuthenticated: (value: boolean) => void
+  userRoles: string[],
+  isLoading: boolean,
+  logout: () => void
+}
 
 const AuthContext = createContext<AuthContextProps>({
   isAuthenticated: false,
   setAuthenticated: () => {},
   userRoles: [],
-  isLoading: true
+  isLoading: true,
+  logout: () => {}
 })
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -32,8 +40,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(false)
   }, [])
 
+  const logout = () => {
+    clearTokens();
+    setAuthenticated(false);
+    setUserRoles([]);
+    navigate('/login');
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, setAuthenticated, userRoles, isLoading }}>
+    <AuthContext.Provider value={{ isAuthenticated, setAuthenticated, userRoles, isLoading, logout }}>
       {children}
     </AuthContext.Provider>
   )

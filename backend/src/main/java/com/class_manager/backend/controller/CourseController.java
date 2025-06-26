@@ -1,7 +1,8 @@
 package com.class_manager.backend.controller;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import static com.class_manager.backend.utils.UserScopeUtils.isAdmin;
+import static com.class_manager.backend.utils.UserScopeUtils.isCoordinator;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,40 +18,37 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.class_manager.backend.dto.model.course.CourseDto;
 import com.class_manager.backend.model.Course;
+import com.class_manager.backend.model.User;
 import com.class_manager.backend.service.CourseService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/courses")
 public class CourseController {
 
 	private final CourseService courseService;
-
-	public CourseController(CourseService courseService) {
-		this.courseService = courseService;
-	}
-
-	/*
-	 * TODO: O coordenador deve receber no retorno 2 listas,
-	 * A primeira lista dos cursos que ele é coordenador
-	 * E a segunda lista dos cursos que ele é professor, ou seja,
-	 * não tem permissão para editar.
-	 */
 	
 	@GetMapping
-	public ResponseEntity<Page<Course>> findAll(Pageable pageable, JwtAuthenticationToken token) {
-		return ResponseEntity.ok(courseService.findAllByUser(pageable, token));
+	public ResponseEntity<?> findAll(JwtAuthenticationToken token) {
+		User user = courseService.getUserFromToken(token);
+		
+		if (isCoordinator(user)) {
+			return ResponseEntity.ok(courseService.findAllByCoordinatorUser(token));
+		}
+
+		if (isAdmin(user)) {
+			return ResponseEntity.ok(courseService.findAllByAdminUser(token));
+		}
+		
+		return ResponseEntity.ok(courseService.findAllByUser(token));
 	}
 
-	@GetMapping("/admin")
-	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-	public ResponseEntity<Page<Course>> findAllCoursesByAdmin(Pageable pageable, JwtAuthenticationToken token) {
-		return ResponseEntity.ok(courseService.findAll(pageable, token));
-	}
-
+	// TODO: POSSÍVELMENTE NÃO SERÁ USADO, ANALISAR E REMOVER
 	@GetMapping("/{id}")
 	public ResponseEntity<Course> findById(@PathVariable Long id) {
 		return courseService.findById(id)
@@ -59,6 +57,7 @@ public class CourseController {
 	}
 
 	@PostMapping
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
 	public ResponseEntity<Course> save(@RequestBody CourseDto dto) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(courseService.save(dto));
 	}
@@ -70,13 +69,15 @@ public class CourseController {
 			@ApiResponse(responseCode = "400", description = "Invalid coordinator provided")
 	})
 	@PatchMapping("/{id}")
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
 	public ResponseEntity<Course> patch(@PathVariable Long id, @RequestBody CourseDto courseDto) {
 		return ResponseEntity.ok(courseService.patch(id, courseDto));
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("hasAuthority('SCOPE_ADMIN')")
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
-		courseService.deleteById(id);
+		courseService.deleteSoft(id);
 		return ResponseEntity.noContent().build();
 	}
 	

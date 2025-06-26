@@ -30,6 +30,15 @@ public class Group {
 	@Column(nullable = false, length = 15)
 	private String abbreviation;
 
+	@Column
+	private Integer semesterOfCourse;
+
+	@Column
+	private String color;
+
+	@Column(nullable = false)
+	private Boolean active = true;
+
 	@ManyToOne(cascade = CascadeType.PERSIST)
 	@JoinColumn(name = "discipline_id")
 	private Discipline discipline;
@@ -38,16 +47,11 @@ public class Group {
 	@JoinColumn(name = "class_room_id")
 	private ClassRoom classRoom;
 
-	@ManyToOne(optional = false)
-    @JoinColumn(name = "semester_id", nullable = false)
-    private Semester semester;
-
-	@Column
-	private String color;
-
-	public Group(GroupDto createGroupDto) {
-		this.name = createGroupDto.name();
-		this.abbreviation = createGroupDto.abbreviation();
+	public Group(GroupDto dto) {
+		this.name = dto.name();
+		this.abbreviation = dto.abbreviation();
+		this.color = dto.color();
+		this.semesterOfCourse = dto.semesterOfCourse();
 	}
 
 }

@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.class_manager.backend.dto.auth.UpdateUserDto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
@@ -49,6 +50,9 @@ public class User {
     @Column(nullable = false, length = 50)
     private String surname;
 
+	@Column(nullable = false)
+	private Boolean active = true;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "users_roles",
@@ -64,6 +68,12 @@ public class User {
 	@OneToMany(mappedBy = "teacher")
     @JsonIgnore
     private List<Discipline> disciplines;
+	
+	public User(UpdateUserDto userDto) {
+		this.email = userDto.email();
+		this.name = userDto.name();
+		this.surname = userDto.surname();
+	}
 	
     public User(String email, String password, String name, String surname, Set<Role> roles) {
 		this.email = email;

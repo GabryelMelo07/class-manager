@@ -9,21 +9,25 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.class_manager.backend.dto.AppConfigProperties;
 import com.class_manager.backend.dto.EmailDto;
 import com.class_manager.backend.dto.auth.CreateUserDto;
 import com.class_manager.backend.dto.auth.LoginRequestDto;
 import com.class_manager.backend.dto.auth.LoginResponseDto;
 import com.class_manager.backend.dto.auth.RefreshTokenRequestDto;
 import com.class_manager.backend.dto.auth.ResetPasswordDto;
+import com.class_manager.backend.dto.auth.UpdateUserDto;
 import com.class_manager.backend.dto.auth.UserResponseDto;
 import com.class_manager.backend.enums.RoleName;
 import com.class_manager.backend.exceptions.JwtTokenValidationException;
@@ -36,6 +40,7 @@ import com.class_manager.backend.repository.RoleRepository;
 import com.class_manager.backend.repository.UserRepository;
 import com.class_manager.backend.utils.EmailTemplate;
 import com.class_manager.backend.utils.JwtUtils;
+import com.class_manager.backend.utils.Patcher;
 
 import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityNotFoundException;
@@ -55,9 +60,8 @@ public class UserService {
 	private final PasswordResetTokenRepository passwordResetTokenRepository;
 	private final EmailService emailService;
 
-	private final String issuer;
+	private final String apiIssuer;
 	private final String frontEndUrl;
-	private final AppConfigProperties appConfigProperties;
 
 	public UserService(
 			JwtUtils jwtUtils,
@@ -68,7 +72,8 @@ public class UserService {
 			RoleRepository roleRepository,
 			PasswordResetTokenRepository passwordResetTokenRepository,
 			EmailService emailService,
-			AppConfigProperties appConfigProperties) {
+			@Value("${api.issuer}") String apiIssuer,
+			@Value("${front-end.url}") String frontEndUrl) {
 		this.jwtUtils = jwtUtils;
 		this.jwtDecoder = jwtDecoder;
 		this.noExpiresAtValidatorJwtDecoder = noExpiresAtValidatorJwtDecoder;
@@ -77,11 +82,11 @@ public class UserService {
 		this.roleRepository = roleRepository;
 		this.passwordResetTokenRepository = passwordResetTokenRepository;
 		this.emailService = emailService;
-		this.appConfigProperties = appConfigProperties;
-		this.issuer = this.appConfigProperties.api().url();
-		this.frontEndUrl = this.appConfigProperties.frontend().url();
+		this.apiIssuer = apiIssuer;
+		this.frontEndUrl = frontEndUrl;
 	}
 
+	@Transactional
 	public void register(CreateUserDto dto) {
 		var existentUser = userRepository.findByEmail(dto.email());
 
@@ -116,6 +121,20 @@ public class UserService {
 		return users;
 	}
 
+	private Page<UserResponseDto> findUsers(RoleName roleName, Pageable pageable) {
+		return userRepository.findByRole(roleName, pageable)
+				.map(user -> new UserResponseDto(user.getId(), user.getEmail(), user.getName(), user.getSurname(),
+						user.getRoles()));
+	}
+
+	public Page<UserResponseDto> findAllTeachers(Pageable pageable) {
+		return findUsers(RoleName.TEACHER, pageable);
+	}
+
+	public Page<UserResponseDto> findAllCoordinators(Pageable pageable) {
+		return findUsers(RoleName.COORDINATOR, pageable);
+	}
+
 	public LoginResponseDto login(LoginRequestDto loginRequest) {
 		var user = userRepository.findByEmail(loginRequest.email());
 
@@ -126,8 +145,10 @@ public class UserService {
 		User usuario = user.get();
 		String userId = usuario.getId().toString();
 
-		var accessToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(1, ChronoUnit.HOURS), usuario);
-		var refreshToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(3, ChronoUnit.DAYS), usuario);
+		var accessToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(1, ChronoUnit.HOURS),
+				usuario);
+		var refreshToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(3, ChronoUnit.DAYS),
+				usuario);
 
 		return new LoginResponseDto(accessToken, refreshToken);
 	}
@@ -141,12 +162,10 @@ public class UserService {
 		String token = operationToken + "_" + expiresAt.toString();
 
 		String resetPassUrl = String.format("%s/reset-password?token=%s", frontEndUrl, token);
-		String institutionName = appConfigProperties.institution().name();
-		String body = new EmailTemplate(appConfigProperties.emailTemplateProperties(), institutionName)
-				.getResetPasswordTemplate(user.getName(), resetPassUrl);
+		String body = EmailTemplate.getResetPasswordTemplate(user.getName(), resetPassUrl);
 
 		try {
-			String emailSubject = "Solicitação de redefinição de senha - %s".formatted(institutionName);
+			String emailSubject = "Solicitação de redefinição de senha - Class Manager";
 			emailService.sendEmailAsync(
 					new EmailDto(email, emailSubject, body));
 		} catch (MessagingException e) {
@@ -167,7 +186,8 @@ public class UserService {
 	}
 
 	public LoginResponseDto refreshToken(RefreshTokenRequestDto dto) {
-		Jwt accessToken = noExpiresAtValidatorJwtDecoder.decode(dto.accessToken()); // Decode without expiration validation
+		Jwt accessToken = noExpiresAtValidatorJwtDecoder.decode(dto.accessToken()); // Decode without expiration
+																					// validation
 		Jwt refreshToken = jwtDecoder.decode(dto.refreshToken());
 
 		if (!refreshToken.getIssuer().equals(accessToken.getIssuer()))
@@ -181,9 +201,46 @@ public class UserService {
 				.orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado."));
 		String userId = usuario.getId().toString();
 
-		var newAccessToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(1, ChronoUnit.HOURS), usuario);
-		var newRefreshToken = jwtUtils.buildJwtAccessToken(issuer, userId, Instant.now().plus(3, ChronoUnit.DAYS), usuario);
+		var newAccessToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(1, ChronoUnit.HOURS),
+				usuario);
+		var newRefreshToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(3, ChronoUnit.DAYS),
+				usuario);
 		return new LoginResponseDto(newAccessToken, newRefreshToken);
+	}
+
+	public void patch(UUID userId, UpdateUserDto userDto) {
+		User partialUser = new User(userDto);
+
+		User existingUser = userRepository.findById(userId)
+				.orElseThrow(() -> new EntityNotFoundException("User not found."));
+
+		if (!userDto.roles().isEmpty()) {
+			Set<Role> roles = new HashSet<>();
+
+			for (RoleName roleName : userDto.roles()) {
+				var role = roleRepository.findByName(roleName);
+
+				if (role.isPresent())
+					roles.add(role.get());
+			}
+
+			partialUser.setRoles(roles);
+		}
+
+		try {
+			Patcher.patch(existingUser, partialUser);
+			userRepository.save(existingUser);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to patch User", e);
+		}
+	}
+
+	public void deleteSoft(UUID userId) {
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new EntityNotFoundException("User not found."));
+
+		user.setActive(false);
+		userRepository.save(user);
 	}
 
 }

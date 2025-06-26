@@ -1,13 +1,13 @@
 package com.class_manager.backend.service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
+import com.class_manager.backend.dto.model.course.CoordinatorCoursesResponseDto;
 import com.class_manager.backend.dto.model.course.CourseDto;
 import com.class_manager.backend.exceptions.UnauthorizedException;
 import com.class_manager.backend.model.Course;
@@ -19,40 +19,43 @@ import com.class_manager.backend.utils.Patcher;
 import static com.class_manager.backend.utils.UserScopeUtils.*;
 
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class CourseService {
 
 	private final CourseRepository courseRepository;
 	private final UserRepository userRepository;
 
-	public CourseService(CourseRepository courseRepository, UserRepository userRepository) {
-		this.courseRepository = courseRepository;
-		this.userRepository = userRepository;
+	public List<Course> findAllByUser(JwtAuthenticationToken token) {
+		User user = getUserFromToken(token);
+		return courseRepository.findTeachingCoursesByUser(user);
 	}
 
-	public Page<Course> findAllByUser(Pageable pageable, JwtAuthenticationToken token) {
-		UUID userId = UUID.fromString(token.getName());
-		User user = userRepository.findById(userId)
-				.orElseThrow(() -> new EntityNotFoundException(
-						"User not found with id: " + userId));
+	public CoordinatorCoursesResponseDto findAllByCoordinatorUser(JwtAuthenticationToken token) {
+		User user = getUserFromToken(token);
 
-		return courseRepository.findAllByUser(user, pageable);
+		if (!isCoordinator(user)) {
+			throw new UnauthorizedException();
+		}
+
+		Course coordinatorCourse = courseRepository.findCoordinatedCourseByUser(user);
+		List<Course> teachingCourses = courseRepository.findTeachingCoursesByUser(user);
+
+		return new CoordinatorCoursesResponseDto(coordinatorCourse, teachingCourses);
 	}
 
-	public Page<Course> findAll(Pageable pageable, JwtAuthenticationToken token) {
-		UUID userId = UUID.fromString(token.getName());
-		User user = userRepository.findById(userId)
-				.orElseThrow(() -> new EntityNotFoundException(
-						"User not found with id: " + userId));
+	public List<Course> findAllByAdminUser(JwtAuthenticationToken token) {
+		User user = getUserFromToken(token);
 
 		if (!isAdmin(user)) {
 			throw new UnauthorizedException();
 		}
 
-		return courseRepository.findAll(pageable);
+		return courseRepository.findByActiveTrue();
 	}
 
 	public Optional<Course> findById(Long id) {
@@ -62,10 +65,10 @@ public class CourseService {
 	public Course save(CourseDto dto) {
 		User coordinator = userRepository.findById(dto.coordinatorId())
 				.orElseThrow(() -> new EntityNotFoundException(
-						"Coordinator not found with id: " + dto.coordinatorId()));
+						"Coordinator not found"));
 
 		if (!isCoordinator(coordinator)) {
-			throw new IllegalArgumentException("User with id: " + dto.coordinatorId() + " is not a Coordinator");
+			throw new IllegalArgumentException("User is not a Coordinator");
 		}
 
 		Course course = new Course(dto);
@@ -77,7 +80,11 @@ public class CourseService {
 	public Course patch(Long courseId, CourseDto dto) {
 		Course existingCourse = courseRepository.findById(courseId)
 				.orElseThrow(() -> new EntityNotFoundException(
-						"Course not found with id: " + courseId));
+						"Course not found"));
+
+		if (existingCourse.getActive() == false) {
+			throw new RuntimeException("Failed to patch Course");
+		}
 
 		Course partialCourse = new Course(dto);
 		UUID coordinatorId = dto.coordinatorId();
@@ -85,10 +92,10 @@ public class CourseService {
 		if (coordinatorId != null) {
 			User coordinator = userRepository.findById(dto.coordinatorId())
 					.orElseThrow(() -> new EntityNotFoundException(
-							"Coordinator not found with id: " + dto.coordinatorId()));
-	
+							"Coordinator not found"));
+
 			if (!isCoordinator(coordinator)) {
-				throw new IllegalArgumentException("User with id: " + dto.coordinatorId() + " is not a Coordinator");
+				throw new IllegalArgumentException("User is not a Coordinator");
 			}
 
 			existingCourse.setCoordinator(coordinator);
@@ -103,8 +110,19 @@ public class CourseService {
 		}
 	}
 
-	public void deleteById(Long id) {
-		courseRepository.deleteById(id);
+	public void deleteSoft(Long id) {
+		Course course = courseRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("Course not found."));
+
+		course.setActive(false);
+		courseRepository.save(course);
+	}
+
+	public User getUserFromToken(JwtAuthenticationToken token) {
+		UUID userId = UUID.fromString(token.getName());
+		return userRepository.findById(userId)
+				.orElseThrow(() -> new EntityNotFoundException(
+						"User not found"));
 	}
 
 }

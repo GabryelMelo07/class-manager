@@ -12,6 +12,7 @@ import com.class_manager.backend.utils.Patcher;
 import static com.class_manager.backend.utils.UserScopeUtils.isTeacher;
 
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
@@ -23,24 +24,23 @@ import java.util.UUID;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class DisciplineService {
 
 	private final DisciplineRepository disciplineRepository;
 	private final CourseRepository courseRepository;
 	private final UserRepository userRepository;
 
-	public DisciplineService(DisciplineRepository disciplineRepository, CourseRepository courseRepository, UserRepository userRepository) {
-		this.disciplineRepository = disciplineRepository;
-		this.courseRepository = courseRepository;
-		this.userRepository = userRepository;
-	}
-
 	public Page<Discipline> findAll(Long courseId, Pageable pageable) {
 		if (!courseRepository.existsById(courseId)) {
-        	throw new EntityNotFoundException("Course not found with id: " + courseId);
-    	}
-		
-		return disciplineRepository.findByCourseId(courseId, pageable);
+			throw new EntityNotFoundException("Course not found with id: " + courseId);
+		}
+
+		return disciplineRepository.findByCourseIdAndActiveTrue(courseId, pageable);
+	}
+
+	public Page<Discipline> findAll(Pageable pageable) {
+		return disciplineRepository.findByActiveTrue(pageable);
 	}
 
 	public Optional<Discipline> findById(Long id) {
@@ -51,7 +51,7 @@ public class DisciplineService {
 		Course course = courseRepository.findById(dto.courseId())
 				.orElseThrow(() -> new EntityNotFoundException(
 						"Course not found with id: " + dto.courseId()));
-		
+
 		User teacher = userRepository.findById(dto.teacherId())
 				.orElseThrow(() -> new EntityNotFoundException(
 						"Teacher not found with id: " + dto.teacherId()));
@@ -89,7 +89,11 @@ public class DisciplineService {
 	public Discipline patch(Long disciplineId, DisciplineDto disciplineDto) {
 		Discipline existingDiscipline = disciplineRepository.findById(disciplineId)
 				.orElseThrow(() -> new EntityNotFoundException("Discipline not found with id: " + disciplineId));
-		
+
+		if (existingDiscipline.getActive() == false) {
+			throw new RuntimeException("Failed to patch Discipline");
+		}
+
 		Discipline partialDiscipline = new Discipline(disciplineDto);
 		UUID teacherId = disciplineDto.teacherId();
 		Long courseId = disciplineDto.courseId();
@@ -123,8 +127,12 @@ public class DisciplineService {
 		}
 	}
 
-	public void deleteById(Long id) {
-		disciplineRepository.deleteById(id);
+	public void deleteSoft(Long id) {
+		Discipline discipline = disciplineRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("Discipline not found."));
+
+		discipline.setActive(false);
+		disciplineRepository.save(discipline);
 	}
 
 }

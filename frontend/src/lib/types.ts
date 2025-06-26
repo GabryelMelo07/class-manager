@@ -1,10 +1,3 @@
-export interface AuthContextProps {
-  isAuthenticated: boolean
-  setAuthenticated: (value: boolean) => void
-  userRoles: string[],
-  isLoading: boolean
-}
-
 export interface JwtPayload {
   scope: string
   exp: number
@@ -60,7 +53,7 @@ export interface Group {
   color: string
 }
 
-export interface ScheduleItem {
+export interface IScheduleItem {
   id: number;
   dayOfWeek: string;
   startTime: string;
@@ -70,6 +63,7 @@ export interface ScheduleItem {
     name: string;
     abbreviation: string;
     color: string;
+    semesterOfCourse: number;
     discipline: {
       id: number;
       name: string;
@@ -77,6 +71,10 @@ export interface ScheduleItem {
       teacher: {
         fullName: string;
       };
+      course: {
+        name: string;
+        abbreviation: string;
+      }
     };
     classRoom: {
       id: number;
@@ -86,4 +84,21 @@ export interface ScheduleItem {
   semester: {
     id: number;
   };
+}
+
+export interface DefaultFormProps {
+  onSubmit: (data: any) => void;
+  onCancel: () => void;
+  isEditMode?: boolean;
+  initialData?: any;
+}
+
+export interface PaginatedResponse<T> {
+  content: T[];
+  page: {
+    size: number;
+    number: number;
+    totalPages: number;
+    totalElements: number;
+  }
 }
