@@ -38,7 +38,7 @@ import com.class_manager.backend.model.User;
 import com.class_manager.backend.repository.PasswordResetTokenRepository;
 import com.class_manager.backend.repository.RoleRepository;
 import com.class_manager.backend.repository.UserRepository;
-import com.class_manager.backend.utils.EmailTemplate;
+import com.class_manager.backend.utils.EmailTemplates;
 import com.class_manager.backend.utils.JwtUtils;
 import com.class_manager.backend.utils.Patcher;
 
@@ -162,12 +162,12 @@ public class UserService {
 		String token = operationToken + "_" + expiresAt.toString();
 
 		String resetPassUrl = String.format("%s/reset-password?token=%s", frontEndUrl, token);
-		String body = EmailTemplate.getResetPasswordTemplate(user.getName(), resetPassUrl);
+		String body = EmailTemplates.getResetPasswordTemplate(user.getName(), resetPassUrl);
 
 		try {
 			String emailSubject = "Solicitação de redefinição de senha - Class Manager";
 			emailService.sendEmailAsync(
-					new EmailDto(email, emailSubject, body));
+					new EmailDto(email, emailSubject, body, null));
 		} catch (MessagingException e) {
 			throw new RuntimeException(e);
 		}

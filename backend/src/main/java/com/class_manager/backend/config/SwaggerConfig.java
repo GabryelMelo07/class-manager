@@ -30,13 +30,13 @@ import io.swagger.v3.oas.models.servers.Server;
 public class SwaggerConfig {
 
 	private final String apiIssuer;
-	private final Boolean swaggerTryItOutDisabled;
+	private final Boolean swaggerTryItOutEnabled;
 
 	public SwaggerConfig(
 			@Value("${api.issuer}") String apiIssuer,
 			@Value("${swagger.tryitout.enabled}") Boolean swaggerTryItOutEnabled) {
 		this.apiIssuer = apiIssuer;
-		this.swaggerTryItOutDisabled = swaggerTryItOutEnabled;
+		this.swaggerTryItOutEnabled = swaggerTryItOutEnabled;
 	}
 
 	@Bean
@@ -96,7 +96,7 @@ public class SwaggerConfig {
 		swaggerUiConfig.setDefaultModelExpandDepth(-1);
 		swaggerUiConfig.setDocExpansion("none");
 
-		if (swaggerTryItOutDisabled) {
+		if (!swaggerTryItOutEnabled) {
 			swaggerUiConfig.setSupportedSubmitMethods(new ArrayList<>());
 		}
 
