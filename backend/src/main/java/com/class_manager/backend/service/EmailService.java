@@ -1,38 +1,53 @@
 package com.class_manager.backend.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.class_manager.backend.dto.EmailDto;
+import com.class_manager.backend.utils.EmailAttachmentDto;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class EmailService {
-    
-    private final JavaMailSender javaMailSender;
-    private final String from;
 
-    EmailService(JavaMailSender javaMailSender, @Value("${spring.mail.username}") String from) {
-        this.javaMailSender = javaMailSender;
+	private final String from;
+	private final JavaMailSender javaMailSender;
+
+	EmailService(@Value("${spring.mail.username}") String from, JavaMailSender javaMailSender) {
 		this.from = from;
-    }
-    
-    @Async
-    public void sendEmailAsync(EmailDto dto) throws MessagingException {
-        MimeMessage message = javaMailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-        
-        helper.setFrom(from);
-        helper.setTo(dto.to());
-        helper.setSubject(dto.subject());
-        helper.setText(dto.body(), true);
+		this.javaMailSender = javaMailSender;
+	}
 
-        javaMailSender.send(message);
-    }
-    
+	@Async
+	public void sendEmailAsync(EmailDto dto) throws MessagingException {
+		MimeMessage message = javaMailSender.createMimeMessage();
+		MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+		helper.setFrom(from);
+		helper.setTo(dto.to().split("\\s*,\\s*"));
+		helper.setSubject(dto.subject());
+		helper.setText(dto.body(), true);
+
+		Optional<EmailAttachmentDto> optionalAttachmentDto = Optional.ofNullable(dto.attachmentDto());
+
+		if (optionalAttachmentDto.isPresent()) {
+			EmailAttachmentDto attachmentDto = optionalAttachmentDto.get();
+			helper.addAttachment(
+					attachmentDto.fileName(),
+					new ByteArrayResource(attachmentDto.content(), "application/pdf"));
+		}
+
+		javaMailSender.send(message);
+	}
+
 }

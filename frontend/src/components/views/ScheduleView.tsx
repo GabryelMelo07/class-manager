@@ -21,18 +21,30 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { useEffect, useRef, useState } from 'react';
-import api from '@/lib/api';
-import type { Course, Group, IScheduleItem, Semester } from '@/lib/types';
-import { toast } from 'sonner';
+import {
+  DAY_ORDER,
+  formatTimeSlot,
+  generateSchedulePdfBlob,
+  generateTimeSlots,
+  getColorClasses,
+  getTranslatedErrorMessage,
+} from '@/utils/Helpers';
+
 import {
   Copy,
   Download,
   Info,
   Loader2,
+  Mail,
   Plus,
   TriangleAlert,
+  Wand,
 } from 'lucide-react';
+
+import api from '@/lib/api';
+import { useEffect, useRef, useState } from 'react';
+import type { Course, Group, IScheduleItem, Semester } from '@/lib/types';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GroupCard } from '@/components/group-card';
@@ -40,16 +52,9 @@ import GroupForm from '@/components/forms/group-form';
 import { DynamicModal } from '@/components/dynamic-modal';
 import { CustomCheckboxGroup } from '@/components/custom-checkbox-group';
 import { UserTypeEnum } from '@/utils/UserTypeEnum';
-import {
-  DAY_ORDER,
-  formatTimeSlot,
-  generateTimeSlots,
-  getColorClasses,
-  getTranslatedErrorMessage,
-} from '@/utils/Helpers';
-import { useReactToPrint } from 'react-to-print';
 import ScheduleTable from '@/components/schedule-table';
 import { useRefreshDataContext } from '@/context/RefreshDataContext';
+import { useReactToPrint } from 'react-to-print';
 
 const usePagination = (initialPage = 0) => {
   const [page, setPage] = useState(initialPage);
@@ -101,6 +106,10 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
   const [selectedSourceSemester, setSelectedSourceSemester] =
     useState<Semester | null>(null);
   const [isConfirmCopyModalOpen, setIsConfirmCopyModalOpen] = useState(false);
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [toEmails, setToEmails] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   // Pagination hooks
   const groupsPagination = usePagination();
@@ -443,7 +452,8 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     }
   };
 
-  // Handlers
+  // ──────────────────────── Handler Methods ──────────────────────── //
+
   const handleCourseChange = (courseId: string) => {
     let course: Course | undefined;
 
@@ -581,8 +591,84 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
     `,
   });
 
-  // DnD handling
-  // Adicione estas funções de handler:
+  const handleGenerateSchedules = async () => {
+    if (!selectedCourse || !selectedSemester) return;
+
+    try {
+      const response = await api.post('/api/v1/schedules/generate-schedules', {
+        courseId: selectedCourse.id,
+        semesterId: selectedSemester.id,
+      });
+
+      const { generatedSchedules, errors } = response.data;
+
+      setSchedules(generatedSchedules);
+      toast.success(
+        `${generatedSchedules.length} Horários gerados automaticamente com sucesso!`
+      );
+
+      if (errors.length > 0) {
+        for (const error of errors) {
+          toast.error(`Erro: ${error.message}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error generating schedules:', error);
+      toast.error('Erro ao gerar horários automaticamente');
+    } finally {
+      setIsGenerateModalOpen(false);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!toEmails) {
+      toast.error('Preencha o campo de destinatários');
+      return;
+    }
+
+    setIsSendingEmail(true);
+
+    try {
+      const element = scheduleTableRef.current;
+      if (!element) throw new Error('Tabela não encontrada');
+
+      const pdfBlob = await generateSchedulePdfBlob(element);
+      const pdfFile = new File([pdfBlob], 'horario.pdf', {
+        type: 'application/pdf',
+      });
+
+      const courseName = selectedCourse?.name || '';
+      const semesterName = selectedSemester?.name || '';
+
+      const formData = new FormData();
+      formData.append('to', toEmails);
+      formData.append(
+        'subject',
+        `Horário do curso: ${courseName} - ${semesterName}`
+      );
+      formData.append('courseName', courseName);
+      formData.append('semesterName', semesterName);
+      formData.append('schedulesPdfAttachment', pdfFile, 'horario.pdf');
+
+      await api.post('/api/v1/email/send-schedules-pdf', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setIsEmailModalOpen(false);
+      setToEmails('');
+      toast.success('E-mail enviado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao enviar e-mail:', error);
+      toast.error('Erro ao enviar e-mail');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  // ──────────────────────── DnD Handler Methods ──────────────────────── //
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id));
 
@@ -893,27 +979,52 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
                   </Select>
 
                   {/* Copy schedules Button */}
-                  {canManage && (
+                  {canManage && selectedSemester?.status === 'ACTIVE' && (
                     <Button
                       onClick={() => setIsCopyModalOpen(true)}
                       variant="outline"
-                      title="Copiar horários de outro semestre"
+                      title="Copiar horário de outro semestre"
                       className="hover:text-secondary-foreground"
                     >
-                      <Copy strokeWidth={2} className="mr-2" />
+                      <Copy strokeWidth={2} />
                       Copiar
+                    </Button>
+                  )}
+
+                  {/* Botão de Gerar Automaticamente */}
+                  {canManage && selectedSemester?.status === 'ACTIVE' && (
+                    <Button
+                      onClick={() => setIsGenerateModalOpen(true)}
+                      variant="outline"
+                      title="Gerar horário automaticamente"
+                      className="hover:text-secondary-foreground"
+                    >
+                      <Wand strokeWidth={2} />
+                      Gerar Automaticamente
                     </Button>
                   )}
 
                   {/* Export schedules Button */}
                   <Button
                     onClick={handlePrint}
-                    title="Exportar horários para PDF"
+                    title="Exportar horário para PDF"
                     className="bg-primary hover:bg-[#5b1693]"
                   >
                     <Download strokeWidth={2} />
                     Exportar
                   </Button>
+
+                  {/* Botão de Enviar por E-mail */}
+                  {canManage && selectedSemester?.status === 'ACTIVE' && (
+                    <Button
+                      onClick={() => setIsEmailModalOpen(true)}
+                      title="Enviar horário por e-mail"
+                      className="bg-primary hover:bg-[#5b1693]"
+                    >
+                      <Mail strokeWidth={2} />
+                      Enviar
+                    </Button>
+                  )}
                 </div>
               </div>
               <div className="overflow-x-auto">
@@ -1070,48 +1181,72 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
         </div>
       </DynamicModal>
 
-      {/* Modal de confirmação de cópia de schedules */}
+      {/* Modal de confirmação para gerar schedules */}
+      <DynamicModal
+        trigger={<div style={{ display: 'none' }} />}
+        title="Gerar Horários Automaticamente"
+        description="Confirma a geração automática dos horários?"
+        open={isGenerateModalOpen}
+        onOpenChange={setIsGenerateModalOpen}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
+            <TriangleAlert className="text-yellow-500 dark:text-yellow-300 flex-shrink-0" />
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">
+              Esta ação irá <strong>SOBRESCREVER</strong> todos os horários
+              existentes do curso <strong>"{selectedCourse?.name}"</strong> no
+              semestre atual. Deseja continuar?
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsGenerateModalOpen(false)}
+              className="hover:text-secondary-foreground"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                handleGenerateSchedules();
+                setIsGenerateModalOpen(false);
+                // setIsConfirmGenerateModalOpen(true);
+              }}
+            >
+              Confirmar
+            </Button>
+          </div>
+        </div>
+      </DynamicModal>
+
+      {/* Modal de confirmação de cópia de schedules - Atualizado */}
       <DynamicModal
         trigger={<div style={{ display: 'none' }} />}
         title="Confirmar Cópia"
+        description="Confirma a cópia dos horários?"
         open={isConfirmCopyModalOpen}
         onOpenChange={setIsConfirmCopyModalOpen}
       >
         <div className="space-y-4">
-          <div className="">
-            <div className="flex">
-              <div className="ml-3">
-                <div className='flex justify-evenly mb-4'>
-                  <TriangleAlert strokeWidth={2} className='text-yellow-300' />
-                  <span className="font-bold text-yellow-300">ALERTA</span>
-                  <TriangleAlert strokeWidth={2} className='text-yellow-300' />
-                </div>
-                <p className="text-sm text-secondary-foreground">
-                  {' '}
-                  Você está prestes a copiar todos os horários do semestre
-                  <span className="font-semibold text-primary-foreground">
-                    {' '}
-                    "{selectedSourceSemester?.name}"
-                  </span>{' '}
-                  para o semestre atual
-                  <span className="font-semibold text-primary-foreground">
-                    {' '}
-                    "{selectedSemester?.name}"
-                  </span>
-                  .
-                  <br />
-                  <br />
-                  Esta ação irá{' '}
-                  <span className="font-bold text-red-600">
-                    SOBRESCREVER
-                  </span>{' '}
-                  todos os horários existentes no semestre atual.
-                </p>
-              </div>
+          {/* Área de alerta com fundo amarelo */}
+          <div className="flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
+            <TriangleAlert className="text-yellow-500 dark:text-yellow-300 flex-shrink-0" />
+            <div className="flex flex-col gap-4">
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Você está prestes a copiar todos os horários do semestre{' '}
+                <strong>"{selectedSourceSemester?.name}"</strong> para o
+                semestre atual <strong>"{selectedSemester?.name}"</strong>.
+              </p>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Esta ação irá <strong>SOBRESCREVER</strong> todos os horários
+                existentes no semestre atual.
+              </p>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 mt-2">
+          {/* Botões de ação */}
+          <div className="flex justify-end gap-3">
             <Button
               variant="outline"
               onClick={() => {
@@ -1127,6 +1262,55 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
               className="bg-primary hover:bg-[#5b1693]"
             >
               Confirmar Cópia
+            </Button>
+          </div>
+        </div>
+      </DynamicModal>
+
+      {/* Modal de Envio por E-mail */}
+      <DynamicModal
+        trigger={<div style={{ display: 'none' }} />}
+        title="Enviar horário por e-mail"
+        description="Informe o(s) e-mail(s) de destino"
+        open={isEmailModalOpen}
+        onOpenChange={setIsEmailModalOpen}
+      >
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="to" className="block text-sm font-medium mb-1">
+              Destinatário(s)
+            </label>
+            <Input
+              id="to"
+              value={toEmails}
+              onChange={(e) => setToEmails(e.target.value)}
+              placeholder="exemplo@email.com, outro@email.com"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Separe múltiplos e-mails com vírgula
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsEmailModalOpen(false)}
+              disabled={isSendingEmail}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSendEmail}
+              disabled={isSendingEmail || !toEmails}
+            >
+              {isSendingEmail ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" />
+                  Enviando...
+                </>
+              ) : (
+                'Enviar e-mail'
+              )}
             </Button>
           </div>
         </div>
