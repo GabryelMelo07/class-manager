@@ -1,4 +1,6 @@
 import { useState } from "react";
+import html2canvas from 'html2canvas-pro';
+import jsPDF from 'jspdf';
 
 export const requiredFieldMessage = "Este campo é obrigatório";
 
@@ -82,4 +84,26 @@ export const usePagination = (initialPage = 0) => {
     setIsLoading,
     loadMore: () => setPage((prev) => prev + 1),
   };
+};
+
+export const generateSchedulePdfBlob = async (element: HTMLElement): Promise<Blob> => {
+  const canvas = await html2canvas(element, {
+    scale: 4,
+    useCORS: true,
+    backgroundColor: null,
+  });
+
+  const imgData = canvas.toDataURL('image/png');
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  const imgProps = pdf.getImageProperties(imgData);
+  const ratio = Math.min(pageWidth / imgProps.width, pageHeight / imgProps.height);
+  const imgWidth = imgProps.width * ratio;
+  const imgHeight = imgProps.height * ratio;
+
+  pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+  return pdf.output('blob');
 };
