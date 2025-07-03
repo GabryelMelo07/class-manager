@@ -2,11 +2,11 @@ FROM node:20-slim AS build
 
 WORKDIR /frontend
 
-COPY package.json package-lock.json ./
+COPY package.json .
 
 RUN npm i @rollup/rollup-linux-x64-gnu
 
-RUN npm ci
+RUN npm i
 
 COPY . .
 
