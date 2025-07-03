@@ -10,7 +10,7 @@ COPY . .
 RUN openssl genpkey -algorithm RSA -out ./src/main/resources/app.key -pkeyopt rsa_keygen_bits:2048
 RUN openssl rsa -pubout -in ./src/main/resources/app.key -out ./src/main/resources/app.pub
 
-RUN mvn clean install
+RUN mvn clean install -DskipTests
 
 FROM openjdk:23-jdk-slim
 
