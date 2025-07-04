@@ -1,5 +1,24 @@
 'use client';
 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -9,21 +28,7 @@ import { setTokens } from '@/lib/auth';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  EyeIcon,
-  EyeOffIcon,
-  Loader2,
-  LockIcon,
-  MailIcon,
-} from 'lucide-react';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { EyeIcon, EyeOffIcon, Loader2, LockIcon, MailIcon } from 'lucide-react';
 import { useState } from 'react';
 import { LoginBenefits } from '@/components/login-benefits';
 import { toast } from 'sonner';
@@ -34,11 +39,20 @@ const formSchema = z.object({
   'button-0': z.string(),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .email({ message: 'E-mail inválido' })
+    .min(1, { message: 'Campo obrigatório' }),
+});
+
 export function Login() {
   const navigate = useNavigate();
   const { setAuthenticated } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,6 +60,13 @@ export function Login() {
       'email-input-0': 'admin@riogrande.ifrs.edu.br',
       'password-input-0': 'admin',
       'button-0': '',
+    },
+  });
+
+  const forgotPasswordForm = useForm<z.infer<typeof forgotPasswordSchema>>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
     },
   });
 
@@ -67,6 +88,27 @@ export function Login() {
       toast.error('Credenciais inválidas.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (
+    values: z.infer<typeof forgotPasswordSchema>
+  ) => {
+    try {
+      setForgotPasswordLoading(true);
+      await api.post(
+        `/api/v1/auth/reset-password/request?email=${encodeURIComponent(
+          values.email
+        )}`
+      );
+      setForgotPasswordOpen(false);
+      toast.success(
+        'E-mail enviado com sucesso! Verifique sua caixa de entrada.'
+      );
+    } catch (err) {
+      toast.error('Ocorreu um erro ao enviar o e-mail. Tente novamente.');
+    } finally {
+      setForgotPasswordLoading(false);
     }
   };
 
@@ -152,14 +194,15 @@ export function Login() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="absolute right-1 top-1 h-8 w-8 text-gray-400 hover:text-gray-600"
+                            className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             onClick={() => setShowPassword(!showPassword)}
                             disabled={loading}
+                            tabIndex={-1}
                           >
                             {showPassword ? (
-                              <EyeOffIcon className="size-4" />
+                              <EyeOffIcon className="w-4 h-4" />
                             ) : (
-                              <EyeIcon className="size-4" strokeWidth={2} />
+                              <EyeIcon className="w-4 h-4" />
                             )}
                           </Button>
                         </div>
@@ -168,6 +211,23 @@ export function Login() {
                     </FormItem>
                   )}
                 />
+
+                <div className="flex justify-end">
+                  <Dialog
+                    open={forgotPasswordOpen}
+                    onOpenChange={setForgotPasswordOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="text-sm underline p-0 text-secondary-foreground hover:text-primary"
+                      >
+                        Esqueci minha senha
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
+                </div>
 
                 <Button
                   type="submit"
@@ -193,6 +253,52 @@ export function Login() {
           <LoginBenefits />
         </div>
       </main>
+
+      <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Redefinir senha</DialogTitle>
+          </DialogHeader>
+          <Form {...forgotPasswordForm}>
+            <form
+              onSubmit={forgotPasswordForm.handleSubmit(handleForgotPassword)}
+              className="space-y-4"
+            >
+              <FormField
+                control={forgotPasswordForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Digite seu e-mail"
+                        type="email"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="outline">
+                    Cancelar
+                  </Button>
+                </DialogClose>
+                <Button
+                  type="submit"
+                  disabled={forgotPasswordLoading}
+                >
+                  {forgotPasswordLoading ? 'Enviando...' : 'Enviar'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

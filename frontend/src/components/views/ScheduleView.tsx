@@ -1294,6 +1294,7 @@ export function ScheduleView({ userType }: { userType: UserTypeEnum }) {
           <div className="flex justify-end gap-3">
             <Button
               variant="outline"
+              className="cursor-pointer hover:text-secondary-foreground"
               onClick={() => setIsEmailModalOpen(false)}
               disabled={isSendingEmail}
             >

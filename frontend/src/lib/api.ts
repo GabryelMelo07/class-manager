@@ -1,106 +1,98 @@
 import axios from 'axios'
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from '@/lib/auth'
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 const api = axios.create({
   baseURL: BASE_URL,
-})
+});
 
-let isRefreshing = false
-let failedQueue: {
-  resolve: (value?: any) => void
-  reject: (reason?: any) => void
-}[] = []
+const publicEndpoints = [
+  '/api/v1/auth/login',
+  '/api/v1/auth/refresh-token',
+  '/api/v1/auth/reset-password/request',
+  '/api/v1/auth/reset-password'
+];
 
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error)
-    } else {
-      prom.resolve(token)
+let isRefreshing = false;
+let failedRequestsQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (err: any) => void;
+}> = [];
+
+api.interceptors.request.use(
+  (config) => {
+    const isPublicEndpoint = publicEndpoints.some(endpoint =>
+      config.url?.includes(endpoint)
+    );
+
+    if (!isPublicEndpoint) {
+      const token = getAccessToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
-  })
-  failedQueue = []
-}
-
-api.interceptors.request.use(config => {
-  const token = getAccessToken()
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 api.interceptors.response.use(
-  response => response,
-  async error => {
-    const originalRequest = error.config
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
 
-    const shouldRefresh =
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      !originalRequest.url.includes('/auth/refresh-token')
+    const isPublicEndpoint = publicEndpoints.some(endpoint =>
+      originalRequest.url?.includes(endpoint)
+    );
 
-    if (!shouldRefresh) {
-      return Promise.reject(error)
+    if (isPublicEndpoint) {
+      return Promise.reject(error);
     }
 
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        failedQueue.push({
-          resolve: (token: string) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`
-            resolve(api(originalRequest))
-          },
-          reject: reject,
-        })
-      })
-    }
-
-    originalRequest._retry = true
-    isRefreshing = true
-
-    const accessToken = getAccessToken()
-    const refreshToken = getRefreshToken()
-
-    if (!accessToken || !refreshToken) {
-      clearTokens()
-      window.location.href = '/login'
-      return Promise.reject(error)
-    }
-
-    try {
-      const response = await api.post('/api/v1/auth/refresh-token', {
-        accessToken,
-        refreshToken,
-      })
-
-      const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data
-      setTokens(newAccessToken, newRefreshToken)
-
-      processQueue(null, newAccessToken)
-
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
-      return api(originalRequest)
-    } catch (err: any) {
-      processQueue(err, null)
-
-      if (
-        err.response?.status === 400 ||
-        err.response?.status === 401 ||
-        err.response?.status === 403 ||
-        err.response?.status === 500
-      ) {
-        clearTokens()
-        window.location.href = '/login'
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedRequestsQueue.push({ resolve, reject });
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        }).catch(err => Promise.reject(err));
       }
 
-      return Promise.reject(err)
-    } finally {
-      isRefreshing = false
+      originalRequest._retry = true;
+      isRefreshing = true;
+      const refreshToken = getRefreshToken();
+
+      try {
+        const response = await api.post('/api/v1/auth/refresh-token', {
+          refreshToken
+        });
+
+        const { accessToken, refreshToken: newRefreshToken } = response.data;
+        setTokens(accessToken, newRefreshToken);
+
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+
+        failedRequestsQueue.forEach(pending => pending.resolve(accessToken));
+        failedRequestsQueue = [];
+
+        return api(originalRequest);
+      } catch (refreshError) {
+        failedRequestsQueue.forEach(pending => pending.reject(refreshError));
+        failedRequestsQueue = [];
+
+        clearTokens();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
+    return Promise.reject(error);
   }
-)
+);
+
 
 export default api
