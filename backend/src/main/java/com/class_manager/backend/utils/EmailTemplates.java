@@ -30,7 +30,7 @@ public class EmailTemplates {
 							.header {
 								width: 100%%;
 								background-color: #721cb8;
-								padding: 20px;
+								padding: 20px 10px;
 							}
 							.header h1 {
 								width: 80%%;
@@ -39,6 +39,13 @@ public class EmailTemplates {
 								margin: 0 auto;
 								color: #f1f1f1 !important;
 							}
+							.logo-img {
+                                width: 80%%;
+                                max-height: 200px;
+                                object-fit: contain;
+                                display: block;
+                                margin: 0 auto;
+                            }
 							.content {
 								padding: 20px;
 								font-size: 16px;
@@ -48,8 +55,8 @@ public class EmailTemplates {
 								padding: 10px 20px;
 								margin: 20px 0;
 								text-decoration: none;
-								background-color: #e4e4e4;
-								color: #1a1a1a !important;
+								background-color: #721cb8;
+								color: #f1f1f1 !important;
 								border-radius: 5px;
 							}
 							.footer {
@@ -69,7 +76,7 @@ public class EmailTemplates {
 					<body>
 						<div class="container">
 							<div class="header">
-								<h1>Class Manager</h1>
+								<img class="logo-img" src="cid:logoImage" alt="Class Manager Logo">
 							</div>
 							<div class="content">
 								%s
@@ -93,7 +100,7 @@ public class EmailTemplates {
 			<br>
 			<h2>Olá, %s.</h2>
 			<p>Recebemos um pedido para redefinir sua senha. Clique no botão abaixo para criar uma nova senha.</p>
-			<a href="%s" class="button">Redefinir Senha</a>
+			<a href="%s" class="button"><strong>Redefinir Senha</strong></a>
 			<p>Se você não solicitou a redefinição de senha, ignore este e-mail.</p>
 		""".formatted(name, link);
 		return DEFAULT_TEMPLATE.formatted(content, LocalDate.now().getYear());
