@@ -25,7 +25,6 @@ public class ClassRoomController {
         return ResponseEntity.ok().body(classRoomService.findAll(pageable));
     }
 
-	// TODO: POSSÍVELMENTE NÃO SERÁ USADO, ANALISAR E REMOVER
     @GetMapping("/{id}")
     public ResponseEntity<ClassRoom> findById(@PathVariable Long id) {
         return classRoomService.findById(id)
