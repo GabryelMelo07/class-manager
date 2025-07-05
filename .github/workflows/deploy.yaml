@@ -1,0 +1,50 @@
+name: Deploy to Coolify
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - master
+
+jobs:
+  deploy:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed files
+        id: changes
+        run: |
+          # Compara os commits entre o base e o head do PR
+          git fetch origin master
+          git diff --name-only origin/master...HEAD > changed_files.txt
+
+          echo "Changed files:"
+          cat changed_files.txt
+
+          if grep -q '^backend/' changed_files.txt; then
+            echo "backend_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+          if grep -q '^frontend/' changed_files.txt; then
+            echo "frontend_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy Backend
+        if: steps.changes.outputs.backend_changed == 'true'
+        run: |
+          echo "Deploying Backend..."
+          curl --request GET '${{ secrets.COOLIFY_WEBHOOK_BACKEND }}' \
+               --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}'
+
+      - name: Deploy Frontend
+        if: steps.changes.outputs.frontend_changed == 'true'
+        run: |
+          echo "Deploying Frontend..."
+          curl --request GET '${{ secrets.COOLIFY_WEBHOOK_FRONTEND }}' \
+               --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}'
