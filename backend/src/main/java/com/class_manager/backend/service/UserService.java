@@ -5,6 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -157,9 +158,17 @@ public class UserService {
 		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 
+		Optional<PasswordResetToken> passwordResetToken = passwordResetTokenRepository.findByUserId(user.getId());
+
+		if (passwordResetToken.isPresent()) {
+			passwordResetTokenRepository.delete(passwordResetToken.get());
+		}
+
 		Instant expiresAt = Instant.now().plus(1, ChronoUnit.HOURS);
 		String operationToken = UUID.randomUUID().toString();
 		String token = operationToken + "_" + expiresAt.toString();
+
+		passwordResetTokenRepository.save(new PasswordResetToken(token, expiresAt, user));
 
 		String resetPassUrl = String.format("%s/reset-password?token=%s", frontEndUrl, token);
 		String body = EmailTemplates.getResetPasswordTemplate(user.getName(), resetPassUrl);

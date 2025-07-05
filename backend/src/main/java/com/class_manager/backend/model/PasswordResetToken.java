@@ -11,10 +11,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "password_reset_token")
 @Data
+@NoArgsConstructor
 public class PasswordResetToken {
 
 	@Id
@@ -30,4 +32,9 @@ public class PasswordResetToken {
     @OneToOne
     private User user;
 
+	public PasswordResetToken(String token, Instant expirationDate, User user) {
+		this.token = token;
+		this.expirationDate = expirationDate;
+		this.user = user;
+	}
 }

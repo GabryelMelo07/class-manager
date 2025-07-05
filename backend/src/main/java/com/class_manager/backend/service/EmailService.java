@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -37,6 +38,16 @@ public class EmailService {
 		helper.setTo(dto.to().split("\\s*,\\s*"));
 		helper.setSubject(dto.subject());
 		helper.setText(dto.body(), true);
+
+		String logoImagePath = "static/logo-horizontal-branco.png";
+		Optional<ClassPathResource> optionalLogoImg = Optional.ofNullable(new ClassPathResource(logoImagePath));
+
+		if (optionalLogoImg.isPresent()) {
+			ClassPathResource logoImg = optionalLogoImg.get();
+			helper.addInline("logoImage", logoImg);
+		} else {
+			log.warn("Logo image not found in classpath: {}", logoImagePath);
+		}
 
 		Optional<EmailAttachmentDto> optionalAttachmentDto = Optional.ofNullable(dto.attachmentDto());
 

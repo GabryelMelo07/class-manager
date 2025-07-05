@@ -9,6 +9,7 @@ import NotFound from '@/pages/NotFound';
 import { RefreshDataProvider } from '@/context/RefreshDataContext';
 import ExportSchedules from '@/pages/ExportSchedules';
 import ExportTeachersSchedules from '@/pages/ExportTeacherSchedules';
+import ResetPassword from './pages/ResetPassword';
 
 export function App() {
   return (
@@ -31,6 +32,7 @@ export function App() {
 
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route
                 path="/"
                 element={

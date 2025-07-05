@@ -170,24 +170,25 @@ export default function UserForm({
                     <FormControl>
                       <div className="relative w-full">
                         <Input
+                          {...field}
                           key="password-input-0"
                           placeholder=""
                           type={showPassword ? 'text' : 'password'}
                           id="password-input-0"
-                          className=" pe-9"
-                          {...field}
+                          className="pr-10"
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-1 top-1 h-8 w-8 text-gray-400 hover:text-gray-600"
+                          className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                           onClick={() => setShowPassword(!showPassword)}
+                          tabIndex={-1}
                         >
                           {showPassword ? (
-                            <EyeOffIcon className="size-4" />
+                            <EyeOffIcon className="w-4 h-4" />
                           ) : (
-                            <EyeIcon className="size-4" strokeWidth={2} />
+                            <EyeIcon className="w-4 h-4" />
                           )}
                         </Button>
                       </div>

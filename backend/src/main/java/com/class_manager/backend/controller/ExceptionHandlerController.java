@@ -81,7 +81,7 @@ public class ExceptionHandlerController extends ResponseEntityExceptionHandler {
 
 	@ExceptionHandler(ResetPasswordTokenInvalidException.class)
 	private ResponseEntity<RestErrorMessage> resetPasswordTokenInvalidExceptionHandler(ResetPasswordTokenInvalidException exception) {
-		return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage(), exception);
+		return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
 	}
 
 	@ExceptionHandler(DataIntegrityViolationException.class)
