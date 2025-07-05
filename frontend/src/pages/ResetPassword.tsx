@@ -66,7 +66,7 @@ export default function ResetPassword() {
             type="button"
             variant="ghost"
             size="icon"
-            className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
             onClick={() => setShowPassword((prev) => !prev)}
             tabIndex={-1}
           >
@@ -89,7 +89,7 @@ export default function ResetPassword() {
         </div>
 
         <Button
-          className="w-full"
+          className="w-full cursor-pointer"
           onClick={handleReset}
           disabled={loading || !password || !confirm}
         >
