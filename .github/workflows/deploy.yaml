@@ -20,9 +20,11 @@ jobs:
       - name: Detect changed files
         id: changes
         run: |
-          # Compara os commits entre o base e o head do PR
-          git fetch origin master
-          git diff --name-only origin/master...HEAD > changed_files.txt
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.merge_commit_sha }}"
+
+          echo "Comparando arquivos entre $BASE_SHA e $HEAD_SHA"
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > changed_files.txt
 
           echo "Changed files:"
           cat changed_files.txt
