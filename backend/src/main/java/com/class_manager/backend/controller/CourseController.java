@@ -48,7 +48,6 @@ public class CourseController {
 		return ResponseEntity.ok(courseService.findAllByUser(token));
 	}
 
-	// TODO: POSSÍVELMENTE NÃO SERÁ USADO, ANALISAR E REMOVER
 	@GetMapping("/{id}")
 	public ResponseEntity<Course> findById(@PathVariable Long id) {
 		return courseService.findById(id)

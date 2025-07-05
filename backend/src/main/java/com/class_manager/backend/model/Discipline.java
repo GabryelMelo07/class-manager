@@ -31,7 +31,7 @@ public class Discipline {
 	@Column(nullable = false, length = 15)
 	private String abbreviation;
 
-	@Column // TODO: nullable = false
+	@Column(nullable = false)
 	private Integer credits;
 
 	@Column(nullable = false)

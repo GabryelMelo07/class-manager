@@ -9,7 +9,8 @@ import NotFound from '@/pages/NotFound';
 import { RefreshDataProvider } from '@/context/RefreshDataContext';
 import ExportSchedules from '@/pages/ExportSchedules';
 import ExportTeachersSchedules from '@/pages/ExportTeacherSchedules';
-import ResetPassword from './pages/ResetPassword';
+import ResetPassword from '@/pages/ResetPassword';
+import DashboardPage from '@/pages/DashboardPage';
 
 export function App() {
   return (
@@ -54,6 +55,14 @@ export function App() {
                 element={
                   <PrivateRoute>
                     <ExportTeachersSchedules />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <PrivateRoute>
+                    <DashboardPage />
                   </PrivateRoute>
                 }
               />

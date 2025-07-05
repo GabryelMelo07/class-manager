@@ -446,6 +446,15 @@ export function Header({ userType }: HeaderProps) {
             </div>
 
             <div className="flex items-center space-x-4">
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  className="font-semibold text-md hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
+                  onClick={() => {navigate('/dashboard')}}
+                >
+                  Dashboard
+                </Button>
+              )}
               {/* Cadastros (apenas para admin) */}
               {isAdmin && (
                 <div>
@@ -509,7 +518,6 @@ export function Header({ userType }: HeaderProps) {
                 </div>
               )}
 
-              {/* EDITAR: Renderizar para Admin e Coordenador */}
               {(isAdmin || isCoordinator) && (
                 <div>
                   {/* Editar dropdown */}
