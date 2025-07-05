@@ -284,13 +284,18 @@ export function Login() {
 
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button type="button" variant="outline">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="cursor-pointer hover:text-secondary-foreground"
+                  >
                     Cancelar
                   </Button>
                 </DialogClose>
                 <Button
                   type="submit"
                   disabled={forgotPasswordLoading}
+                  className="cursor-pointer"
                 >
                   {forgotPasswordLoading ? 'Enviando...' : 'Enviar'}
                 </Button>
