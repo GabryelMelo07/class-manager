@@ -1,5 +1,7 @@
 package com.class_manager.backend.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,5 +23,7 @@ public interface SemesterRepository extends JpaRepository<Semester, Long> {
 				s.startDate ASC
 			""")
 	Page<Semester> findAllOrderByStatusActive(Pageable pageable);
+
+	Optional<Semester> findByYearAndSemester(int year, int semester);
 
 }

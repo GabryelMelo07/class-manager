@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/schedules")
@@ -27,6 +28,11 @@ public class ScheduleController {
 	@GetMapping
 	public ResponseEntity<List<Schedule>> findAll(Long semesterId, Long courseId) {
 		return ResponseEntity.ok(scheduleService.findAll(semesterId, courseId));
+	}
+
+	@GetMapping("/public")
+	public ResponseEntity<List<Schedule>> findAllPublicActualSchedules() {
+		return ResponseEntity.ok(scheduleService.findAllPublicSchedules());
 	}
 
 	@GetMapping("/semester/{semesterId}/teacher/{teacherId}")
