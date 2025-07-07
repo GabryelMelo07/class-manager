@@ -31,8 +31,8 @@ Os `Dockerfile` já estão preparados nas pastas:
 É **imprescindível** configurar as variáveis de ambiente **ANTES** de rodar os containers.
 
 - Exemplo de configuração:
-  - Backend: [`backend/.example_env`](backend/.example_env)
-  - Frontend: [`frontend/.example_env`](frontend/.example_env)
+  - Backend: [`backend/example.env`](backend/example.env)
+  - Frontend: [`frontend/example.env`](frontend/example.env)
 
 > 📄 Para entender o significado e uso de cada variável, consulte o arquivo [variaveis.md](./variaveis.md)
 
