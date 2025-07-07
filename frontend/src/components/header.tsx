@@ -865,7 +865,7 @@ export function Header({ userType }: HeaderProps) {
               )}
 
               {/* Export Button */}
-              {userType !== UserTypeEnum.TEACHER && userType !== UserTypeEnum.PUBLIC && (
+              {userType !== UserTypeEnum.TEACHER && (
                 <DropdownMenu
                   open={exportarOpen}
                   onOpenChange={setExportarOpen}
@@ -905,8 +905,7 @@ export function Header({ userType }: HeaderProps) {
               )}
 
               {/* Logout Button */}
-              {userType !== UserTypeEnum.PUBLIC && (
-                <Button
+              <Button
                   variant="ghost"
                   className="font-semibold text-md hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
                   onClick={logout}
@@ -914,7 +913,6 @@ export function Header({ userType }: HeaderProps) {
                   Sair
                   <LogOut className="ml-2" strokeWidth={2} />
                 </Button>
-              )}
 
               {/* Theme Toggle Button */}
               <Button

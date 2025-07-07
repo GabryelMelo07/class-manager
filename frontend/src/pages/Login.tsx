@@ -57,8 +57,8 @@ export function Login() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      'email-input-0': 'admin@riogrande.ifrs.edu.br',
-      'password-input-0': 'admin',
+      'email-input-0': '',
+      'password-input-0': '',
       'button-0': '',
     },
   });
