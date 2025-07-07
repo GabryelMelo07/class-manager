@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const token = getAccessToken();
     const path = window.location.pathname;
     
-    const publicRoutes = ['/login', '/reset-password'];
+    const publicRoutes = ['/login', '/reset-password', '/public'];
     const isPublicRoute = publicRoutes.includes(path);
     
     if (!isRefreshing) {
