@@ -59,6 +59,11 @@ public class ScheduleService {
 		return scheduleRepository.findSchedulesBySemesterAndCourse(semesterId, courseId);
 	}
 
+	public List<Schedule> findAllPublicSchedules() {
+		Semester semester = semesterService.findActualSemester();
+		return scheduleRepository.findSchedulesBySemester(semester.getId());
+	}
+
 	/**
 	 * Retrieves a schedule by its unique identifier.
 	 *

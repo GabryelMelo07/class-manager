@@ -2,7 +2,6 @@
 
 import { AdminView } from "@/components/views/AdminView";
 import { CoordinatorView } from "@/components/views/CoordinatorView";
-import { PublicView } from "@/components/views/PublicView";
 import { TeacherView } from "@/components/views/TeacherView";
 import { getAccessToken, getUserScope } from "@/lib/auth";
 
@@ -24,6 +23,4 @@ export function Home() {
   if (scopes.includes("TEACHER")) {
     return <TeacherView />;
   }
-
-  return <PublicView />;
 }

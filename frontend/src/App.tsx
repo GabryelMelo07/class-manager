@@ -11,6 +11,7 @@ import ExportSchedules from '@/pages/ExportSchedules';
 import ExportTeachersSchedules from '@/pages/ExportTeacherSchedules';
 import ResetPassword from '@/pages/ResetPassword';
 import DashboardPage from '@/pages/DashboardPage';
+import PublicScheduleView from './pages/PublicViewPage';
 
 export function App() {
   return (
@@ -34,6 +35,7 @@ export function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/public" element={<PublicScheduleView />} />
               <Route
                 path="/"
                 element={

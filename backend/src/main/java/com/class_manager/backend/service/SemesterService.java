@@ -12,6 +12,7 @@ import com.class_manager.backend.exceptions.InvalidScheduleException;
 import com.class_manager.backend.model.Semester;
 import com.class_manager.backend.repository.SemesterRepository;
 import com.class_manager.backend.utils.Patcher;
+import com.class_manager.backend.utils.SemesterUtils;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,16 @@ public class SemesterService {
 		}
 
 		return semester;
+	}
+
+	public Semester findActualSemester() {
+		LocalDate now = LocalDate.now();
+		int year = now.getYear();
+		int month = now.getMonthValue();
+		int semesterNumber = SemesterUtils.getSemesterNumber(month);
+
+		return semesterRepository.findByYearAndSemester(year, semesterNumber)
+                .orElseThrow(() -> new EntityNotFoundException("Semester not found."));
 	}
 
 	private Semester save(Semester semester) {

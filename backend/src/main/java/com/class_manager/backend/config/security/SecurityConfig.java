@@ -68,6 +68,7 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password/request").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh-token").permitAll()
+				.requestMatchers(HttpMethod.GET, "/api/v1/schedules/public").permitAll()
 				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 				.anyRequest().authenticated())
 				.csrf(csrf -> csrf.disable())

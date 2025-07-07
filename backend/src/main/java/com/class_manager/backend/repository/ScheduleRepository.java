@@ -28,6 +28,12 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 	@Query("""
 				SELECT s FROM Schedule s
 					WHERE s.semester.id = :semesterId
+			""")
+	List<Schedule> findSchedulesBySemester(@Param("semesterId") Long semesterId);
+
+	@Query("""
+				SELECT s FROM Schedule s
+					WHERE s.semester.id = :semesterId
 					AND s.group.discipline.teacher.id = :teacherId
 			""")
 	List<Schedule> findSchedulesBySemesterAndTeacher(@Param("semesterId") Long semesterId,
