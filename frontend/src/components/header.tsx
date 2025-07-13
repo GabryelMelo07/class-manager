@@ -61,6 +61,8 @@ export function Header({ userType }: HeaderProps) {
     id: string;
     name: string;
   } | null>(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { triggerRefresh } = useRefreshDataContext();
   const navigate = useNavigate();
 
@@ -175,7 +177,12 @@ export function Header({ userType }: HeaderProps) {
     if (!entityType) return;
 
     try {
-      const endpoint = getEntityEndpoint(entityType);
+      let endpoint = getEntityEndpoint(entityType);
+
+      if (entityType === 'user') {
+        endpoint = 'users';
+      }
+
       await api.delete(`/api/v1/${endpoint}/${id}`);
 
       // Atualiza lista
@@ -319,6 +326,8 @@ export function Header({ userType }: HeaderProps) {
           ? 'Horário de aula do curso atualizado com sucesso!'
           : 'Horário de aula do curso criado com sucesso!'
       );
+
+      triggerRefresh('courses');
     } catch (error) {
       console.error('Erro:', error);
       toast.error(
@@ -432,6 +441,41 @@ export function Header({ userType }: HeaderProps) {
     }
   };
 
+  const handleImportJSON = async () => {
+    if (!selectedFile) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await api.post('/api/v1/import-data/json', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.status !== 200) {
+        toast.error('Erro ao tentar importar dados via JSON.');
+      }
+
+      if (response.data.errors) {
+        for (const error of response.data.errors) {
+          toast.error(error);
+        }
+      }
+
+      toast.info('Dados processados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao importar JSON:', error);
+      toast.error(
+        'Erro ao importar dados. Verifique o arquivo e tente novamente.'
+      );
+    } finally {
+      setImportModalOpen(false);
+      setSelectedFile(null);
+    }
+  };
+
   return (
     <>
       <header className="bg-primary text-white shadow-lg">
@@ -450,7 +494,9 @@ export function Header({ userType }: HeaderProps) {
                 <Button
                   variant="ghost"
                   className="font-semibold text-md hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
-                  onClick={() => {navigate('/dashboard')}}
+                  onClick={() => {
+                    navigate('/dashboard');
+                  }}
                 >
                   Dashboard
                 </Button>
@@ -512,6 +558,11 @@ export function Header({ userType }: HeaderProps) {
                         onClick={() => handleOpenCadastrarModal('discipline')}
                       >
                         Disciplina
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setImportModalOpen(true)}
+                      >
+                        Importar JSON
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -696,7 +747,7 @@ export function Header({ userType }: HeaderProps) {
                     <div className="flex justify-end gap-4 mt-4">
                       <Button
                         variant="outline"
-                        className="cursor-pointer"
+                        className="cursor-pointer hover:text-secondary-foreground"
                         onClick={() => setConfirmDeleteOpen(false)}
                       >
                         Cancelar
@@ -861,6 +912,68 @@ export function Header({ userType }: HeaderProps) {
                       isEditMode={!!editingId}
                     />
                   </DynamicModal>
+
+                  {/* Modal de Importação JSON */}
+                  <DynamicModal
+                    trigger={<div hidden />}
+                    title="Importar Dados"
+                    description="Selecione um arquivo JSON para importar"
+                    open={importModalOpen}
+                    onOpenChange={(open) => {
+                      if (!open) {
+                        setImportModalOpen(false);
+                        setSelectedFile(null);
+                      }
+                    }}
+                  >
+                    <div className="space-y-4">
+                      <div
+                        className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        onClick={() =>
+                          document.getElementById('fileInput')?.click()
+                        }
+                      >
+                        {selectedFile ? (
+                          <p className="font-medium">{selectedFile.name}</p>
+                        ) : (
+                          <>
+                            <p className="text-sm text-muted-foreground mt-2">
+                              Clique para selecionar um arquivo
+                            </p>
+                          </>
+                        )}
+                        <input
+                          id="fileInput"
+                          type="file"
+                          accept=".json"
+                          className="hidden"
+                          onChange={(e) =>
+                            setSelectedFile(e.target.files?.[0] || null)
+                          }
+                        />
+                      </div>
+
+                      <div className="flex justify-end gap-4">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedFile(null);
+                            setImportModalOpen(false);
+                          }}
+                          className="cursor-pointer hover:text-secondary-foreground"
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          onClick={handleImportJSON}
+                          disabled={!selectedFile}
+                          className="bg-primary hover:bg-[#5b1693]"
+                        >
+                          Importar
+                        </Button>
+                      </div>
+                    </div>
+                  </DynamicModal>
                 </div>
               )}
 
@@ -872,47 +985,48 @@ export function Header({ userType }: HeaderProps) {
                 >
                   <DropdownMenuTrigger asChild>
                     <Button
-                        variant="ghost"
-                        className="text-md font-semibold hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
-                      >
-                        Exportar{' '}
-                        {exportarOpen ? (
-                          <ChevronUp
-                            className="font-semibold"
-                            strokeWidth={2}
-                          />
-                        ) : (
-                          <ChevronDown
-                            className="font-semibold"
-                            strokeWidth={2}
-                          />
-                        )}
-                      </Button>
+                      variant="ghost"
+                      className="text-md font-semibold hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
+                    >
+                      Exportar{' '}
+                      {exportarOpen ? (
+                        <ChevronUp className="font-semibold" strokeWidth={2} />
+                      ) : (
+                        <ChevronDown
+                          className="font-semibold"
+                          strokeWidth={2}
+                        />
+                      )}
+                    </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem
-                        onClick={() => {navigate('/export-schedules')}}
-                      >
-                        Todos Horários
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {navigate('/export-schedules-by-teacher')}}
-                      >
-                        Horários por Professor
-                      </DropdownMenuItem>
+                      onClick={() => {
+                        navigate('/export-schedules');
+                      }}
+                    >
+                      Horários por Curso
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        navigate('/export-schedules-by-teacher');
+                      }}
+                    >
+                      Horários por Professor
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
 
               {/* Logout Button */}
               <Button
-                  variant="ghost"
-                  className="font-semibold text-md hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
-                  onClick={logout}
-                >
-                  Sair
-                  <LogOut className="ml-2" strokeWidth={2} />
-                </Button>
+                variant="ghost"
+                className="font-semibold text-md hover:text-stone-300 hover:bg-transparent dark:hover:bg-transparent"
+                onClick={logout}
+              >
+                Sair
+                <LogOut className="ml-2" strokeWidth={2} />
+              </Button>
 
               {/* Theme Toggle Button */}
               <Button

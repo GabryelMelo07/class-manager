@@ -24,6 +24,6 @@ public interface SemesterRepository extends JpaRepository<Semester, Long> {
 			""")
 	Page<Semester> findAllOrderByStatusActive(Pageable pageable);
 
-	Optional<Semester> findByYearAndSemester(int year, int semester);
+	Optional<Semester> findByYearAndNumber(int year, int number);
 
 }

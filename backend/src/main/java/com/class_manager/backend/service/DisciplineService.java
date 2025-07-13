@@ -47,6 +47,11 @@ public class DisciplineService {
 		return disciplineRepository.findById(id);
 	}
 
+	public Optional<Long> findByName(String name) {
+		return disciplineRepository.findByName(name)
+				.map(Discipline::getId);
+	}
+
 	public Discipline save(DisciplineDto dto) {
 		Course course = courseRepository.findById(dto.courseId())
 				.orElseThrow(() -> new EntityNotFoundException(

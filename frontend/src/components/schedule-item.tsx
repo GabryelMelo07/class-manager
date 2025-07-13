@@ -69,7 +69,7 @@ export default function ScheduleItem({
         colorClasses.bgClass
       } hover:shadow-sm transition-all border-l-4 ${
         colorClasses.borderClass
-      } p-1 rounded mb-2 ${draggable ? 'cursor-move' : ''} ${
+      } p-1 rounded mb-2 ${draggable ? 'cursor-grab' : 'cursor-default'} ${
         transform ? 'shadow-lg scale-105' : 'hover:-translate-y-0.5'
       }`}
     >

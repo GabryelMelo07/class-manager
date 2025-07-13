@@ -50,6 +50,7 @@ public class Discipline {
 	public Discipline(DisciplineDto createDisciplineDto) {
 		this.name = createDisciplineDto.name();
 		this.abbreviation = createDisciplineDto.abbreviation();
+		this.credits = createDisciplineDto.credits();
 	}
 	
 }

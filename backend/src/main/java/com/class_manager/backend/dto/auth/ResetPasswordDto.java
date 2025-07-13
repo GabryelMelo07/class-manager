@@ -1,4 +1,6 @@
 package com.class_manager.backend.dto.auth;
 
-public record ResetPasswordDto(String newPassword) {
+import com.class_manager.backend.decorators.ValidString;
+
+public record ResetPasswordDto(@ValidString String newPassword) {
 }
