@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, Loader2, Moon, Sun } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -20,6 +20,7 @@ import { Semester, Person, IScheduleItem } from '@/lib/types';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { formatTimeSlot, usePagination } from '@/utils/Helpers';
+import { useTheme } from '@/context/ThemeContext';
 
 const TEACHER_DAYS_MAP: Record<string, string> = {
   MONDAY: 'Segunda',
@@ -45,6 +46,7 @@ export default function ExportTeachersSchedules() {
   const semestersPagination = usePagination();
   const teachersPagination = usePagination();
 
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -181,9 +183,11 @@ export default function ExportTeachersSchedules() {
               onClick={() => navigate(-1)}
               className="w-8 h-8 mr-5 cursor-pointer transition-all hover:-translate-y-0.5"
             />
-            <h1 className="text-2xl font-bold">
-              Exportar Horários por Professor
-            </h1>
+            <img
+              className="w-[250px] h-max"
+              src="logo_horizontal_branco.png"
+              alt="Logo Class Manager"
+            />
           </div>
           <div className="flex items-center gap-4">
             <Select
@@ -251,15 +255,30 @@ export default function ExportTeachersSchedules() {
             <Button
               onClick={handlePrint}
               disabled={!selectedSemester || loading}
-              variant='secondary'
+              variant="secondary"
             >
               <Download className="mr-2" /> Exportar PDF
+            </Button>
+
+            {/* Theme Toggle Button */}
+            <Button
+              variant="ghost"
+              className="font-semibold bg-transparent hover:text-stone-200 hover:bg-transparent dark:hover:bg-transparent"
+              onClick={toggleTheme}
+              aria-label="Alternar tema"
+            >
+              {theme === 'dark' ? (
+                <Sun strokeWidth={2} />
+              ) : (
+                <Moon strokeWidth={2} />
+              )}
             </Button>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto p-8">
+        <h1 className="text-2xl font-bold pb-4">Exportar Horários por Professor</h1>
         <div ref={contentRef}>
           {loading && (
             <div className="flex justify-center py-12">

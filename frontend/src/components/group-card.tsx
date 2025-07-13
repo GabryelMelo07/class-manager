@@ -34,7 +34,13 @@ export function GroupCard({ group, draggable }: GroupCardProps) {
       style={style}
       className={`${colorClasses.bgClass} p-3 border-l-4 ${
         colorClasses.borderClass
-      } rounded-lg shadow-sm cursor-move transition-all ${
+      } rounded-lg shadow-sm
+      ${
+        draggable
+          ? 'cursor-grab'
+          : 'cursor-default'
+      }
+      transition-all ${
         transform
           ? 'shadow-lg scale-105'
           : 'hover:shadow-md hover:-translate-y-0.5'

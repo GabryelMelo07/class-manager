@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Moon, Sun } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -15,6 +15,14 @@ import type { IScheduleItem } from '@/lib/types';
 import { DAY_ORDER, generateTimeSlots } from '@/utils/Helpers';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { useTheme } from '@/context/ThemeContext';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // Interface para tipagem dos dados
 interface GroupWithDetails {
@@ -93,6 +101,7 @@ export default function PublicScheduleView() {
   const [generatedTimeSlots, setGeneratedTimeSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { theme, toggleTheme } = useTheme();
 
   // Buscar dados iniciais
   useEffect(() => {
@@ -222,69 +231,112 @@ export default function PublicScheduleView() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">
-        Consulta Pública de Horários
-      </h1>
-
-      <div className="bg-card max-w-2xl mx-auto rounded-lg shadow-md p-6 mb-8">
-        <div className="flex flex-col gap-4">
-          {/* Seletor de Curso */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Selecione o Curso
-            </label>
-            <Select
-              onValueChange={(value) => setSelectedCourseId(Number(value))}
-              value={selectedCourseId?.toString() || ''}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione um curso" />
-              </SelectTrigger>
-              <SelectContent>
-                {courses.map((course) => (
-                  <SelectItem key={course.id} value={course.id.toString()}>
-                    {course.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <>
+      <header className="bg-primary text-primary-foreground shadow-lg">
+        <div className="container mx-auto mb-6 px-4 py-6 flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <img
+              className="w-[250px] h-max"
+              src="logo_horizontal_branco.png"
+              alt="Logo Class Manager"
+            />
           </div>
+          {/* Theme Toggle Button */}
+          <Button
+            variant="ghost"
+            className="font-semibold bg-transparent hover:text-stone-200 hover:bg-transparent dark:hover:bg-transparent"
+            onClick={toggleTheme}
+            aria-label="Alternar tema"
+          >
+            {theme === 'dark' ? (
+              <Sun strokeWidth={2} />
+            ) : (
+              <Moon strokeWidth={2} />
+            )}
+          </Button>
+        </div>
+      </header>
 
-          {/* Informação do Semestre */}
-          {filteredSchedules.length > 0 && (
-            <div className="py-2 px-1 rounded-lg">
-              <p className="text-sm font-medium">
-                Semestre Atual: {filteredSchedules[0].semester.name}
-              </p>
+      <div className="container mx-auto px-4 pb-8">
+        <h1 className="text-3xl font-bold text-center mb-8">
+          Consulta Pública de Horários
+        </h1>
+
+        <div className="bg-card max-w-2xl mx-auto rounded-lg shadow-md p-6 mb-8">
+          <div className="flex flex-col gap-4">
+            {/* Seletor de Curso */}
+            <div>
+              <div className="flex gap-2 align-center">
+                <label className="block text-sm font-medium mb-2">
+                  Selecione o Curso
+                </label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-gray-400 cursor-help">🛈</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p>
+                        Se o curso não aparece na lista, os horários ainda não
+                        foram criados.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <Select
+                onValueChange={(value) => setSelectedCourseId(Number(value))}
+                value={selectedCourseId?.toString() || ''}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione um curso" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map((course) => (
+                    <SelectItem key={course.id} value={course.id.toString()}>
+                      {course.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* Informação do Semestre */}
+            {filteredSchedules.length > 0 && (
+              <div className="py-2 px-1 rounded-lg">
+                <p className="text-sm font-medium">
+                  {filteredSchedules[0]?.semester?.name?.replace('-', ' ') ||
+                    ''}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tabela de Horários */}
+        <div className="bg-card rounded-lg shadow-md overflow-hidden">
+          {courses.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              Nenhum curso disponível para exibição
+            </div>
+          ) : filteredSchedules.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              Nenhum horário encontrado para o curso selecionado
+            </div>
+          ) : (
+            <ScheduleTable
+              schedules={filteredSchedules}
+              droppable={false}
+              daysMap={daysMap}
+              generatedTimeSlots={generatedTimeSlots}
+              onDeleteSchedule={undefined}
+              timeSlotsError={false}
+              scheduleTableRef={null}
+              showCourse={false}
+            />
           )}
         </div>
       </div>
-
-      {/* Tabela de Horários */}
-      <div className="bg-card rounded-lg shadow-md overflow-hidden">
-        {courses.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            Nenhum curso disponível para exibição
-          </div>
-        ) : filteredSchedules.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            Nenhum horário encontrado para o curso selecionado
-          </div>
-        ) : (
-          <ScheduleTable
-            schedules={filteredSchedules}
-            droppable={false}
-            daysMap={daysMap}
-            generatedTimeSlots={generatedTimeSlots}
-            onDeleteSchedule={undefined}
-            timeSlotsError={false}
-            scheduleTableRef={null}
-            showCourse={false}
-          />
-        )}
-      </div>
-    </div>
+    </>
   );
 }

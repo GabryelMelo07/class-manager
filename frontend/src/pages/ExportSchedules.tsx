@@ -4,11 +4,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Moon, Sun } from 'lucide-react';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -19,6 +21,7 @@ import { Semester } from '@/lib/types';
 import { toast } from 'sonner';
 import { DAY_ORDER, generateTimeSlots } from '@/utils/Helpers';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function ExportSchedules() {
   const [semesters, setSemesters] = useState<Semester[]>([]);
@@ -32,6 +35,7 @@ export default function ExportSchedules() {
     generatedTimeSlots: string[];
   }> | null>(null);
   const [loading, setLoading] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -177,7 +181,11 @@ export default function ExportSchedules() {
               }}
               className="w-8 h-8 mr-5 cursor-pointer transition-all hover:-translate-y-0.5"
             />
-            <h1 className="text-2xl font-bold">Exportar Horários</h1>
+            <img
+              className="w-[250px] h-max"
+              src="logo_horizontal_branco.png"
+              alt="Logo Class Manager"
+            />
           </div>
           <div className="flex items-center gap-4">
             <Select
@@ -188,26 +196,70 @@ export default function ExportSchedules() {
                 <SelectValue placeholder="Selecione o semestre" />
               </SelectTrigger>
               <SelectContent>
-                {semesters.map((semester) => (
-                  <SelectItem key={semester.id} value={semester.id.toString()}>
-                    {semester.name}
-                  </SelectItem>
-                ))}
+                {/* Semestres Ativos */}
+                <SelectGroup>
+                  <SelectLabel className="text-xs font-semibold text-gray-500 px-2 py-1">
+                    Semestres Ativos
+                  </SelectLabel>
+                  {semesters
+                    .filter((semester) => semester.status === 'ACTIVE')
+                    .map((semester) => (
+                      <SelectItem
+                        key={semester.id}
+                        value={semester.id.toString()}
+                        className="pl-4"
+                      >
+                        {semester.name}
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
+
+                <SelectGroup>
+                  <SelectLabel className="text-xs font-semibold text-gray-500 px-2 py-1">
+                    Semestres Concluídos
+                  </SelectLabel>
+                  {semesters
+                    .filter((semester) => semester.status === 'FINALIZED')
+                    .map((semester) => (
+                      <SelectItem
+                        key={semester.id}
+                        value={semester.id.toString()}
+                        className="pl-4 opacity-75"
+                      >
+                        {semester.name}
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
 
             <Button
               onClick={handlePrint}
               disabled={!selectedSemester || loading}
-              variant='secondary'
+              variant="secondary"
             >
               <Download className="mr-2" /> Exportar PDF
+            </Button>
+
+            {/* Theme Toggle Button */}
+            <Button
+              variant="ghost"
+              className="font-semibold bg-transparent hover:text-stone-200 hover:bg-transparent dark:hover:bg-transparent"
+              onClick={toggleTheme}
+              aria-label="Alternar tema"
+            >
+              {theme === 'dark' ? (
+                <Sun strokeWidth={2} />
+              ) : (
+                <Moon strokeWidth={2} />
+              )}
             </Button>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-6">
+        <h1 className="text-2xl font-bold pb-4">Exportar Horários</h1>
         <div ref={contentRef}>
           {loading && (
             <div className="flex justify-center py-12">

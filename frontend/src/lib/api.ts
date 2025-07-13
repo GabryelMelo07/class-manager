@@ -62,15 +62,18 @@ api.interceptors.response.use(
 
       originalRequest._retry = true;
       isRefreshing = true;
-      const refreshToken = getRefreshToken();
+
+      const currentAccessToken = getAccessToken();
+      const currentRefreshToken = getRefreshToken();
 
       try {
         const response = await api.post('/api/v1/auth/refresh-token', {
-          refreshToken
+          accessToken: currentAccessToken,
+          refreshToken: currentRefreshToken
         });
 
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
-        setTokens(accessToken, newRefreshToken);
+        const { accessToken, refreshToken } = response.data;
+        setTokens(accessToken, refreshToken);
 
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 

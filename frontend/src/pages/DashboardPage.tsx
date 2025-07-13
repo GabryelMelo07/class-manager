@@ -23,7 +23,15 @@ import {
   Legend,
 } from 'recharts';
 
-import { Users, Home, GraduationCap, BookOpen, ArrowLeft } from 'lucide-react';
+import {
+  Users,
+  Home,
+  GraduationCap,
+  BookOpen,
+  ArrowLeft,
+  Sun,
+  Moon,
+} from 'lucide-react';
 
 import {
   ChartConfig,
@@ -47,6 +55,8 @@ import { toast } from 'sonner';
 import { Semester } from '@/lib/types';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { useTheme } from '@/context/ThemeContext';
 
 const COLORS = ['#E4B7E5', '#B288C0', '#C4B5FD', '#7E5A9B', '#9A48D0'];
 
@@ -95,6 +105,7 @@ export default function DashboardPage() {
   const [classRoomOccupation, setClassRoomOccupation] = useState<
     ClassRoomOccupationReport[]
   >([]);
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -157,47 +168,89 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <header className="bg-primary text-primary-foreground shadow-lg">
         <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold flex items-center">
-            <ArrowLeft
-              onClick={() => navigate(-1)}
-              className="w-8 h-8 mr-5 cursor-pointer transition-all hover:-translate-y-0.5"
+          <div className="flex items-center">
+            <h1 className="text-2xl font-bold flex items-center">
+              <ArrowLeft
+                onClick={() => navigate(-1)}
+                className="w-8 h-8 mr-5 cursor-pointer transition-all hover:-translate-y-0.5"
+              />
+            </h1>
+            <img
+              className="w-[250px] h-max"
+              src="logo_horizontal_branco.png"
+              alt="Logo Class Manager"
             />
-            Dashboard Acadêmico
-          </h1>
-          <Select
-            value={selectedSemester?.id.toString() || ''}
-            onValueChange={(id) =>
-              setSelectedSemester(
-                semesters.find((s) => s.id === Number(id)) || null
-              )
-            }
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Selecione o semestre" />
-            </SelectTrigger>
-            <SelectContent>
-              {['ACTIVE', 'FINALIZED'].map((status) => (
-                <SelectGroup key={status}>
-                  <SelectLabel>
-                    {status === 'ACTIVE'
-                      ? 'Semestres Ativos'
-                      : 'Semestres Concluídos'}
+          </div>
+          <div className="flex gap-5">
+            <Select
+              value={selectedSemester?.id.toString() || ''}
+              onValueChange={(id) =>
+                setSelectedSemester(
+                  semesters.find((s) => s.id === Number(id)) || null
+                )
+              }
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Selecione o semestre" />
+              </SelectTrigger>
+              <SelectContent>
+                {/* Semestres Ativos */}
+                <SelectGroup>
+                  <SelectLabel className="text-xs font-semibold text-gray-500 px-2 py-1">
+                    Semestres Ativos
                   </SelectLabel>
                   {semesters
-                    .filter((s) => s.status === status)
-                    .map((s) => (
-                      <SelectItem key={s.id} value={s.id.toString()}>
-                        {s.name}
+                    .filter((semester) => semester.status === 'ACTIVE')
+                    .map((semester) => (
+                      <SelectItem
+                        key={semester.id}
+                        value={semester.id.toString()}
+                        className="pl-4"
+                      >
+                        {semester.name}
                       </SelectItem>
                     ))}
                 </SelectGroup>
-              ))}
-            </SelectContent>
-          </Select>
+
+                <SelectGroup>
+                  <SelectLabel className="text-xs font-semibold text-gray-500 px-2 py-1">
+                    Semestres Concluídos
+                  </SelectLabel>
+                  {semesters
+                    .filter((semester) => semester.status === 'FINALIZED')
+                    .map((semester) => (
+                      <SelectItem
+                        key={semester.id}
+                        value={semester.id.toString()}
+                        className="pl-4 opacity-75"
+                      >
+                        {semester.name}
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            {/* Theme Toggle Button */}
+            <Button
+              variant="ghost"
+              className="font-semibold bg-transparent hover:text-stone-200 hover:bg-transparent dark:hover:bg-transparent"
+              onClick={toggleTheme}
+              aria-label="Alternar tema"
+            >
+              {theme === 'dark' ? (
+                <Sun strokeWidth={2} />
+              ) : (
+                <Moon strokeWidth={2} />
+              )}
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-6 grid gap-6">
+        <h1 className="text-secondary-foreground text-2xl font-bold">
+          Dashboard
+        </h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader>
@@ -264,7 +317,7 @@ export default function DashboardPage() {
 
         {/* GRÁFICOS LADO A LADO */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="h-full overflow-auto">
+          <Card className="h-full overflow-auto custom-scroll-bar">
             <CardHeader>
               <CardTitle>Carga Horária dos Professores</CardTitle>
               <CardDescription>
@@ -395,7 +448,7 @@ export default function DashboardPage() {
                 Nenhum dado disponível
               </div>
             ) : (
-              <div className="overflow-auto max-h-72">
+              <div className="overflow-auto max-h-72 custom-scroll-bar">
                 <table className="min-w-full">
                   <thead>
                     <tr>
@@ -432,7 +485,7 @@ export default function DashboardPage() {
                 Nenhum dado disponível
               </div>
             ) : (
-              <div className="max-h-96 overflow-auto">
+              <div className="max-h-96 overflow-auto custom-scroll-bar">
                 <table className="min-w-full">
                   <thead>
                     <tr>

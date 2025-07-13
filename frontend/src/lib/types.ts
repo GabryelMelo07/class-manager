@@ -37,7 +37,7 @@ export interface Semester {
   id: number
   name: string
   year: number
-  semester: number
+  number: number
   startDate: string
   endDate: string
   status: string
