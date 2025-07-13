@@ -30,6 +30,11 @@ public class ClassRoomService {
 		return classRoomRepository.findById(id);
 	}
 
+	public Optional<Long> findByName(String name) {
+		return classRoomRepository.findByName(name)
+				.map(ClassRoom::getId);
+	}
+
 	public ClassRoom save(ClassRoomDto dto) {
 		ClassRoom newClassRoom = new ClassRoom(dto);
 		return classRoomRepository.save(newClassRoom);

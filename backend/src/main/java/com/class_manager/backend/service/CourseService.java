@@ -62,6 +62,11 @@ public class CourseService {
 		return courseRepository.findById(id);
 	}
 
+	public Optional<Long> findByName(String name) {
+		return courseRepository.findByName(name)
+				.map(Course::getId);
+	}
+
 	public Course save(CourseDto dto) {
 		User coordinator = userRepository.findById(dto.coordinatorId())
 				.orElseThrow(() -> new EntityNotFoundException(

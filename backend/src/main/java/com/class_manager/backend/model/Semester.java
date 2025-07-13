@@ -43,7 +43,7 @@ public class Semester {
 	private Integer year;
 
 	@Column(nullable = false)
-	private Integer semester;
+	private Integer number;
 
 	@Column(nullable = false)
 	private LocalDate startDate;
@@ -73,7 +73,7 @@ public class Semester {
 		this.startDate = SemesterUtils.getSemesterStartDate(yearNumber, semesterNumber);
         this.endDate = SemesterUtils.getSemesterEndDate(yearNumber, semesterNumber);
         this.year = yearNumber;
-        this.semester = semesterNumber;
+        this.number = semesterNumber;
 	}
 
 }

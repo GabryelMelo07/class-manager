@@ -1,16 +1,14 @@
 package com.class_manager.backend.dto.model.discipline;
 
-import java.util.UUID;
-
 import com.class_manager.backend.decorators.ValidString;
 
 import jakarta.validation.constraints.Positive;
 
-public record DisciplineDto(
+public record ImportDisciplineDto(
 	@ValidString String name,
 	@ValidString String abbreviation,
 	@Positive Integer credits,
-	@Positive Long courseId,
-	UUID teacherId
+	@ValidString String courseName,
+	@ValidString String teacherEmail
 ) {
 }

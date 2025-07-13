@@ -114,7 +114,7 @@ public class UserService {
 	public List<UserResponseDto> findAll() {
 		List<UserResponseDto> users = new ArrayList<>();
 
-		for (User user : userRepository.findAll()) {
+		for (User user : userRepository.findByActiveTrue()) {
 			users.add(new UserResponseDto(user.getId(), user.getEmail(), user.getName(), user.getSurname(),
 					user.getRoles()));
 		}
@@ -136,6 +136,11 @@ public class UserService {
 		return findUsers(RoleName.COORDINATOR, pageable);
 	}
 
+	public Optional<UUID> findByEmail(String userEmail) {
+		return userRepository.findByEmail(userEmail)
+				.map(User::getId);
+	}
+
 	public LoginResponseDto login(LoginRequestDto loginRequest) {
 		var user = userRepository.findByEmail(loginRequest.email());
 
@@ -148,7 +153,7 @@ public class UserService {
 
 		var accessToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(1, ChronoUnit.HOURS),
 				usuario);
-		var refreshToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(3, ChronoUnit.DAYS),
+		var refreshToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(7, ChronoUnit.DAYS),
 				usuario);
 
 		return new LoginResponseDto(accessToken, refreshToken);
@@ -212,7 +217,7 @@ public class UserService {
 
 		var newAccessToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(1, ChronoUnit.HOURS),
 				usuario);
-		var newRefreshToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(3, ChronoUnit.DAYS),
+		var newRefreshToken = jwtUtils.buildJwtAccessToken(apiIssuer, userId, Instant.now().plus(7, ChronoUnit.DAYS),
 				usuario);
 		return new LoginResponseDto(newAccessToken, newRefreshToken);
 	}

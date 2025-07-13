@@ -52,7 +52,7 @@ public class SemesterService {
 		int month = now.getMonthValue();
 		int semesterNumber = SemesterUtils.getSemesterNumber(month);
 
-		return semesterRepository.findByYearAndSemester(year, semesterNumber)
+		return semesterRepository.findByYearAndNumber(year, semesterNumber)
                 .orElseThrow(() -> new EntityNotFoundException("Semester not found."));
 	}
 
