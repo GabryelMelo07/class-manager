@@ -55,6 +55,12 @@ export default function DisciplineForm({
     teacherId: isEditMode
       ? z.string().optional()
       : z.string().min(1, { message: requiredFieldMessage }),
+    credits: z.coerce
+      .number({
+        invalid_type_error: requiredFieldMessage,
+      })
+      .int()
+      .min(1, { message: 'O número de créditos deve ser maior que zero' }),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -64,6 +70,7 @@ export default function DisciplineForm({
       abbreviation: '',
       courseId: '',
       teacherId: '',
+      credits: 0,
     },
   });
 
@@ -137,6 +144,7 @@ export default function DisciplineForm({
         abbreviation: initialData.abbreviation,
         courseId: initialData.course?.id || '',
         teacherId: initialData.teacher?.id || '',
+        credits: initialData.credits || 0,
       });
     }
   }, [initialData, form]);
@@ -196,6 +204,26 @@ export default function DisciplineForm({
                     </div>
                   </FormControl>
 
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="credits"
+            render={({ field }) => (
+              <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
+                <FormLabel>Número de Créditos *</FormLabel>
+                <div className="w-full">
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={1}
+                      placeholder="Insira os créditos"
+                      {...field}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </div>
               </FormItem>

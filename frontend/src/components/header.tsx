@@ -380,6 +380,7 @@ export function Header({ userType }: HeaderProps) {
         abbreviation: data.abbreviation,
         courseId: data.courseId,
         teacherId: data.teacherId,
+        credits: data.credits,
       };
 
       if (editingId) {
