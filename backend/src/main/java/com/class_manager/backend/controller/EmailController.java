@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.class_manager.backend.dto.EmailAttachmentDto;
 import com.class_manager.backend.dto.EmailDto;
 import com.class_manager.backend.dto.RequestEmailDto;
 import com.class_manager.backend.service.EmailService;
-import com.class_manager.backend.utils.EmailAttachmentDto;
 import com.class_manager.backend.utils.EmailTemplates;
 
 import jakarta.mail.MessagingException;

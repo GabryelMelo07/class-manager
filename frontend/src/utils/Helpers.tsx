@@ -88,7 +88,7 @@ export const usePagination = (initialPage = 0) => {
 
 export const generateSchedulePdfBlob = async (element: HTMLElement): Promise<Blob> => {
   const canvas = await html2canvas(element, {
-    scale: 4,
+    scale: 1,
     useCORS: true,
     backgroundColor: null,
   });
