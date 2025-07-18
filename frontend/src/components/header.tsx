@@ -466,6 +466,9 @@ export function Header({ userType }: HeaderProps) {
       }
 
       toast.info('Dados processados com sucesso!');
+      triggerRefresh('courses');
+      triggerRefresh('groups');
+      triggerRefresh('semesters');
     } catch (error) {
       console.error('Erro ao importar JSON:', error);
       toast.error(
