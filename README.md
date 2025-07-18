@@ -1,3 +1,5 @@
+![Logo do Projeto](logo_class_manager.png)
+
 # 📚 Class Manager
 
 **Class Manager** é um sistema **gratuito** de gerenciamento de horários acadêmicos que permite a organização de cursos, professores, salas de aula, disciplinas, turmas e horários.
